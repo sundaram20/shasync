@@ -1,0 +1,1952 @@
+<?php include_once("../config/auto_loader.php");
+checkUserLevelPermission($_SESSION['userLevel'],TBL_ORDERS,'view');
+?>
+
+<?php
+//unset($_SESSION['editCart']);
+/*$array 	=	$_SESSION['editCart'];
+foreach( $array as $key => $value ){	
+	    if( $key == "" ){ 
+		unset($_SESSION['editCart'][$key]);
+		}
+}*///unset($_SESSION['editCart']);
+
+/*echo "<pre>";
+print_r($_SESSION);
+echo "</pre>";*/
+//($_SESSION['editCart']);
+////unset previously set session///////////////
+
+//unset($_SESSION);
+/*unset($_SESSION['editCart']);
+unset($_SESSION['eId']);
+unset($_SESSION['editCart']['charges_total']);
+unset($_SESSION['editCart']['charges_price']);
+unset($_SESSION['editCart']['charges_description']);
+unset($_SESSION['editCart']['charges_total']);*/
+//////////////////////////////////////////////
+
+
+// UPDATE tarrif_price_per_day------------------------------------
+/*
+$sql_order = mysqli_query($connNew,"SELECT * FROM `".TBL_ORDERS."`");
+while($record = mysqli_fetch_array($sql_order)){
+	$sqlOrderDetail2 = executeSql("Select * from `".TBL_ORDER_DETAIL."` where id_order=".addslashes($record['id_order']));
+			if(num_rows($sqlOrderDetail2) >0 ){
+				while($rowOrderDetail_update= $db->fetch_object2($sqlOrderDetail2)){
+					$room_quantity	 = $rowOrderDetail_update->room_quantity;
+					$tarrif_price	 = $rowOrderDetail_update->total_price;//tarrif_price;
+					$tarrif_price_per_day1	=	$tarrif_price/$room_quantity;
+					$updateInventory = executeSql("UPDATE  `".TBL_ORDER_DETAIL."`  SET 
+						  `tarrif_price_per_day`='".addslashes($tarrif_price_per_day1)."'
+								where  `id_order_detail`='".addslashes($rowOrderDetail_update->id_order_detail)."'");
+				}				
+			}
+	}*/
+// UPDATE tarrif_price_per_day------------------------------------	
+
+
+
+if(!empty($_REQUEST['eId']) && $_REQUEST['action']=='edit'){
+	$sql = "SELECT * FROM `".TBL_ORDERS."` where `id_order` = '".addslashes(encryptor('decrypt',$_REQUEST['eId']))."'";
+	$_SESSION['eId']	=	$_REQUEST['eId'];
+	$db->query($sql);
+	if($db->num_rows() > 0){
+		$row = $db->fetch_object();
+	}	
+	
+ 	  $_SESSION['OrderUniqueID'] = addslashes(encryptor('decrypt',$_REQUEST['eId']));
+ 	  $OrderUniqueID			 = $_SESSION['OrderUniqueID'];
+
+
+unset($_SESSION['editCart'][$OrderUniqueID]);
+unset($_SESSION[$OrderUniqueID]['eId']);
+unset($_SESSION['editCart'][$OrderUniqueID]['charges_total']);
+unset($_SESSION['editCart'][$OrderUniqueID]['charges_price']);
+unset($_SESSION['editCart'][$OrderUniqueID]['charges_description']);
+unset($_SESSION['editCart'][$OrderUniqueID]['charges_total']);
+
+
+	$disabled = 'disabled="disabled"';
+	
+	$_SESSION['editCart'][$OrderUniqueID]['orderReference']		 = $row->reference;
+	$_SESSION['editCart'][$OrderUniqueID]['amountReceived']		 = round($row->amount_received,2);						
+	$_SESSION['editCart'][$OrderUniqueID]['discountPrice'] 		 = round($row->total_discounts,2);
+	$_SESSION['editCart'][$OrderUniqueID]['AdditionalChargesPrice'] = round($row->total_addcharges,2);
+	$_SESSION['editCart'][$OrderUniqueID]['addcharges_var']		 = round($row->addcharges_var,2);
+	$_SESSION['editCart'][$OrderUniqueID]['addcharges_type']	 = round($row->addcharges_type,2);
+	$_SESSION['editCart'][$OrderUniqueID]['noOfDays']			 = $row->no_of_days;
+	$_SESSION['editCart'][$OrderUniqueID]['id_company']			 = $row->id_company;
+	$_SESSION['editCart'][$OrderUniqueID]['id_guest']			 = $row->id_customer;
+	$_SESSION['editCart'][$OrderUniqueID]['id_contacts']		 = $row->id_company_person;
+	$_SESSION['editCart'][$OrderUniqueID]['hotel_id']			 = $row->id_hotel;
+	$_SESSION['editCart'][$OrderUniqueID]['rate_id']			 = $row->id_rate;
+	
+	$id_shop = $row->id_shop;
+	
+	$_SESSION['editCart'][$OrderUniqueID]['series']['series']		=	$row->series_id;				  
+	$_SESSION['editCart'][$OrderUniqueID]['series']['operator']		=	$row->operator_id;
+	$_SESSION['editCart'][$OrderUniqueID]['series']['type']			=	$row->type;
+				  
+				  
+	$_SESSION['editCart'][$OrderUniqueID]['reservation_date'] = date('d-m-Y',strtotime($row->checkin)).' to '. date('d-m-Y',strtotime($row->checkout));
+	$days =  abs((strtotime($row->checkin) - strtotime($row->checkout))/ 86400 );
+	if($days == '0'){
+	$noOfDays = '1';
+	}else {
+	$noOfDays = $days;
+	}		
+}elseif($_REQUEST['type']=='N' || $_REQUEST['type']=='C'){
+	 $_SESSION['OrderUniqueID'] = rand(0000,9999);
+ 	 $OrderUniqueID	= $_SESSION['OrderUniqueID'];
+ 
+ 
+	}	
+	
+
+?>
+<?php include_once("includes/header.php")?>
+   <?php include_once("includes/left.php")?>
+   <div class="content-wrapper"> 
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+       <h1> Hotel Booking Quotation  <small>Manage Quotation </small> </h1>
+       <ol class="breadcrumb">
+        <li><a href="home.php"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li class="active">Manage Quotation </li>
+      </ol>
+     </section>
+    <!-- Main content -->
+    <section class="content">
+       <div class="row"> 
+        <!-- left column -->
+        <div class="col-md-12"> 
+           <!-- general form elements -->
+           
+           <div class="nav-tabs-custom">
+            <div class="box-header with-border">
+            <?php 
+			$AmendmentCount	= $row->code;
+			
+			if($AmendmentCount >0){					
+				$AmendmentTotalCount	= '-'.$row->code;
+				}	
+			?>
+               <h3 class="box-title"><?php echo $_REQUEST['eId']==''?'Add':'Edit'?> Quotation  : <a><?php echo $row->reference.$AmendmentTotalCount; ?></a></h3>
+             </div>
+            <!-- /.box-header --> 
+            <!-- form start -->
+            
+            <form name="form1" id="availabiltyForm"  method="post" enctype="multipart/form-data" action="checkoutEdit.php" data-parsley-validate>
+               <input type="hidden" value="<?php echo $_REQUEST['eId'];?>" name="eId" id="eId" />
+                
+                <input type="hidden" name="book_type" id="book_type" value="<?php echo $_REQUEST['type']?>" />    
+               <div class="form-group has-error" align="center">
+                <?php if($_SESSION['errorMsg']){?>
+                <p class="help-block"><?php echo messageError($_SESSION['errorMsg']);?></p>
+                <?php unset($_SESSION['errorMsg']);}elseif($_SESSION['successMsg']){?>
+                <p class="help-block"><?php echo messageSuc($_SESSION['successMsg']);?></p>
+                <?php unset($_SESSION['successMsg']);}?>
+              </div>
+               <div class="box-body">
+                <ul class="timeline">
+                   <!-- timeline item -->
+                   <li class="time-label"> <span class="bg-red"> Main Information </span> </li>
+                   <li> <i class="fa fa-hotel bg-red"></i>
+                    <div class="timeline-item">
+                       <div class="row">
+      
+	
+      
+			            <input type="hidden" value="<?php echo $OrderUniqueID;?>" name="OrderUniqueID" id="OrderUniqueID" />
+                        <div class="form-group col-sm-5">
+                           <label for="hotel_id" >Hotel</label>
+                           <?php 
+				$categoryDropDown = '<select name="hotel_id" id="hotel_id" class="form-control select2" data-parsley-required data-parsley-errors-container="#hotelError"  onChange="getRoom(this.value,0); ajaxAddRoommsgUpdate();" '.$disabled.'>
+									 					  <option value="">Select Hotel</option>';
+	  $resCat = selectSql(TBL_HOTELS," where status='1' AND id_shop='".addslashes($_SESSION['shop'])."'".$_SESSION['HotelPerHotel']." ",' ORDER BY `name`');
+											  if(num_rows($resCat)){
+											  	while($resultCat = $db->fetch_object2($resCat)){
+													if($row->id_hotel == $resultCat->id){
+													   $selected = 'selected="selected"';
+													}else{
+														$selected = '';
+													}
+													$categoryDropDown .= '<option '.$selected.' value="'.$resultCat->id.'">'.ucfirst($resultCat->name).'-'.ucfirst($resultCat->city).'</option>';
+												}
+											  }
+											 	echo $categoryDropDown .= '</select>';
+									
+									 ?>
+                           <?php if(!empty($_REQUEST['eId']) && $_REQUEST['action']=='edit'){?>
+                           <input type="hidden" name="hotel_id" id="hotel_id" value="<?php  echo $row->id_hotel; ?>">
+                         
+                           <?PHP } ?>
+                           <span id="hotelError"></span> </div>
+                        
+                        <div class="form-group col-sm-3">
+                           <label for="reservation_date">Checkin Date - Checkout Date </label>
+                           <div class="input-group">
+                            <?php 
+					if(!empty($_REQUEST['eId']) && $_REQUEST['action']=='edit'){
+					
+					?>
+                             <div class="input-group-addon"> <i class="fa fa-calendar"></i> </div>
+                               <input type="text" class="form-control pull-right dateRangeEdit" id="reservation_date" name="reservation_date" data-parsley-required value="<?php if($row->checkin !='' ){echo date('d-m-Y',strtotime($row->checkin)).' to '.date('d-m-Y',strtotime($row->checkout));} ?>" data-parsley-errors-container="#reservation_dateError"  automcomplete="off">
+                               
+                               
+                               
+                            <?php }else{ ?>
+                            
+                            <?php if($_SESSION['userLevel']=='1'){		?>
+                           <div class="input-group">
+                               <div class="input-group-addon"> <i class="fa fa-calendar"></i> </div>
+                               <input type="text" class="form-control pull-right dateRangeEdit" id="reservation_date" name="reservation_date" data-parsley-required value="<?php echo date('d-m-Y').' to '.date('d-m-Y') ?>" data-parsley-errors-container="#reservation_dateError"  automcomplete="off">
+                             </div>
+                             
+                              <?PHP }else{ ?>
+                            <div class="input-group">
+                               <div class="input-group-addon"> <i class="fa fa-calendar"></i> </div>
+                               <input type="text" class="form-control pull-right dateRangeEdit" id="reservation_date" name="reservation_date" data-parsley-required value="<?php echo date('d-m-Y').' to '.date('d-m-Y') ?>" data-parsley-errors-container="#reservation_dateError"  automcomplete="off">
+                             </div>
+                              <?PHP } ?>
+                            <?php } ?>
+                          </div>
+                           <!-- /.input group --> 
+                           <span id="reservation_dateError"></span> </div>
+                       
+                        
+            
+            
+                           
+                           
+                           
+                        <div class="form-group col-sm-5">
+                           <label for="id_company">Company Name - City</label>
+                           <select class="form-control" name="id_company" id="id_company" onChange="ajaxAddRoommsgUpdate(); getcreditvalueNew(this.value,''); getContact(this.value,''); getRateLetter(this.value,'');   " data-parsley-errors-container="#companyError" data-parsley-required >
+                            <option value="">Select Company</option>
+                            <?php $resCat = selectSql(TBL_COMPANY," where status='1' and `id_shop` = '".addslashes($_SESSION['shop'])."' and name !='' ".$_SESSION['Ids_user_access_Company']." ",' ORDER BY `id_company`');
+											  if($db->num_rows2($resCat)){
+											  	while($resultCat = $db->fetch_object2($resCat)){
+													if($row->id_company == $resultCat->id_company){
+														$selected = 'selected="selected"';
+													}else{
+														$selected = '';
+													}
+													$companyData .= '<option '.$selected.' value="'.$resultCat->id_company.'">'.ucfirst($resultCat->name).'-'.ucfirst($resultCat->city).'</option>';
+												}
+											  }
+											 echo $companyData;;
+											  ?>
+                          </select>
+                           <span id="companyError"></span> </div>
+                       
+                        
+                        
+
+                       
+                        
+                        <div class="form-group col-sm-5">
+                           <label for="id_contacts" >Contact Person</label>
+                           <div class="input-group" id="showbookedby">
+                            <select class="form-control select2" name="id_contacts" id="id_contacts" data-parsley-errors-container="#contactError" >
+                               <option value="">Select User</option>
+                             </select>
+                            <span id="contactError"></span>
+                            <div class="input-group-addon bookedby_open"> <i class="fa fa-plus"></i> </div>
+                          </div>
+                         </div>
+                        
+                           <div style="color:red; float:left; margin-left:15px; margin-top:29px;" id="getcredit_value"></div>
+                        
+                        
+                      </div>
+                                             <div style="color:red; text-align:center; margin-top:29px;" id="getRecordExist"></div>
+
+                     </div>
+                  </li>
+                
+                   <!-- END timeline item -->
+                   <li class="time-label"> <span class="bg-blue"> Room Information </span>
+                    <div class="box-tools pull-right">
+                    <div id="view"  <?php if($row->id_rate=='0' ){echo 'style="display:none;"';} ?> >
+                       <button class="btn btn-danger" type="button" id="view" > <i class="fa fa-eye fa-lg"></i> View</button>
+                       </div>
+                       <div id="adhol" <?php if($row->id_rate !='0'){echo 'style="display:none;"';} ?>>
+                       <button class="pull-left btn btn-success btn-xs" id="adhoc" type="button" onclick="ajaxAddRoom('.$row->id.','.$row->rate_assign_id.','.$rowRoom->room_id.','.$rowRoom->rate_plan_id.',0);" style="width: 50px;height: 36px;margin-right: 8px"><i class="fa fa-plus-circle" > Add </i></button></div>
+                     </div>
+                    <div class="form-group col-sm-3 pull-right" >
+  <select class="form-control" name="rate_id" id="rate_id" onChange="ajaxCheckAdogoRateletter();  showRateLetterView(this);" data-parsley-required data-parsley-errors-container="#rate_idError">
+                        <?php 
+						//`fs_rate_details`.hotel_id='".addslashes($row->id_hotel)."' AND;
+			  $rate_level_assgin = selectColumn(TBL_COMPANY,'id_rate_level'," WHERE `id_company` = '".addslashes($row->id_company)."'");
+			  
+$resCat = executeSql("SELECT `".TBL_RATE."`.*, `".TBL_RATE_LEVEL."`.name as level_name ,`".TBL_RATE_MARKET."`.name as market_name from `".TBL_RATE."` LEFT JOIN `".TBL_RATE_LEVEL."` ON `".TBL_RATE."`.rate_level_id=`".TBL_RATE_LEVEL."`.id   LEFT JOIN `".TBL_RATE_MARKET."` ON `".TBL_RATE."`.market=`".TBL_RATE_MARKET."`.id  LEFT JOIN `fs_rate_details` ON `fs_rate`.id=`fs_rate_details`.rate_id  where   `fs_rate_details`.hotel_id='".addslashes($row->id_hotel)."' AND  `".TBL_RATE."`.id_shop='".addslashes($_SESSION['shop'])."' and (`".TBL_RATE."`.company_id='".$row->id_company."' || `".TBL_RATE."`.company_id='0' ) and (( `".TBL_RATE."`.start_date <=  '".date('Y-m-d',strtotime($row->checkin))."' and  `".TBL_RATE."`.end_date >= '".date('Y-m-d',strtotime($row->checkout))."') OR (  `".TBL_RATE."`.start_date between '".date('Y-m-d',strtotime($row->checkin))."' and '".date('Y-m-d',strtotime($row->checkout))."') OR (  `".TBL_RATE."`.end_date between '".date('Y-m-d',strtotime($row->checkin))."' and '".date('Y-m-d',strtotime($row->checkout))."')) group by `".TBL_RATE."`.rate_name" );
+							  if($db->num_rows2($resCat)==0 and $row->id_rate!=''){
+									  $planData .= '<option '.$selected.' value="0">ADHOC</option>';
+									  }
+							  
+							  
+							  if($db->num_rows2($resCat)){
+								  
+								  
+                               $planData .= '<option '.$selected.' value="0">ADHOC</option>';
+                            	
+							
+							
+							
+								while($resultCat = $db->fetch_object2($resCat)){
+									if($row->id_rate == $resultCat->id){
+										$selected = 'selected="selected"';
+									}else{
+										$selected = '';
+									}
+									$planData .= '<option '.$selected.' value="'.$resultCat->id.'">'.ucfirst($resultCat->rate_name).' | '.ucfirst($resultCat->level_name).' | '.ucfirst($resultCat->market_name).'</option>';
+								}
+							  //}elseif(){
+								  
+								  }else{
+							  $planData .= '<option value="" >Rate Letter</option>';
+							  
+							  }
+							 echo $planData; ?>
+                      </select>
+                       <span id="rate_idError"></span> </div>
+                  </li>
+                  
+                   <li id="DateAdd"> <i class="fa fa-home bg-blue"></i>
+                    <div class="timeline-item">
+                       <div class="row table-responsive">
+                        <table class="table table-hover" id="showRoom">
+                           <tr>
+                            <th>Room Type</th>
+                            <th>Plan</th>
+                            <th>Room Quantity</th>
+                            <th>Adults/Room</th>
+                            <th>Child/Room<br>
+                               (0 - 5 yrs)</th>
+                            <th>Child/Room<br>
+                               (5 - 12 yrs)</th>
+                            <th>Tariff. Per Room <br> /Per Night</th>
+                            <th>Tax</th>
+                           <!-- <th>Inclusive Tax</th>-->
+                            <th>Avg. Rate*Night</th>
+                            <th><button class="btn btn-danger btn-sm" type="button" id="view" onClick="ajaxRoomRemoveAll();"> <i class="fa fa-close fa-lg"></i> </button></th>
+                          </tr>
+                           <tr id="addRoommsg" align="center" <?php if($row->id_order != ''){ echo 'style="display:none;"';}  ?>>
+                            <td colspan="9"><strong>Please Add Room.</strong></td>
+                          </tr>
+                           <?php 	
+			
+			
+
+
+			
+			$sqlOrderDetail = executeSql("Select * from `".TBL_ORDER_DETAIL."` where id_order='".addslashes($row->id_order)."' group by unique_code,room_id,room_quantity,adults,child,rate_plan_id");
+			
+			
+			if(num_rows($sqlOrderDetail) >0 ){
+			
+				while($rowOrderDetail= $db->fetch_object2($sqlOrderDetail)){
+					
+					$rowOrderDetail->child;
+					
+			$resRoom = executeSql("SELECT rt.name as room_name, rp.name as rate_name, rd.* from `".TBL_RATE_DETAILS."` rd left join `".TBL_ROOM_TYPE."` rt on rd.room_id = rt.id left join `".TBL_RATE_PLAN."` rp on rd.rate_plan_id = rp.id where  rd.status='1' and rt.status='1' and rd.rate_assign_id='".addslashes($rowOrderDetail->rate_assign_id)."'  and rd.rate_plan_id='".addslashes($rowOrderDetail->rate_plan_id)."' and rd.rate_id='".addslashes($row->id_rate)."' and room_id='".addslashes($rowOrderDetail->room_id)."' order by rd.room_id");	
+
+
+	if(num_rows($resRoom) >0){
+
+$rowRoom = $db->fetch_object2($resRoom);		
+		
+		if($rowOrderDetail->adults == '1'){
+			$priceValue += $rowRoom->pkg_price;	
+			
+		}elseif($rowOrderDetail->adults == '2'){
+			$priceValue += $rowRoom->pkg_price;	
+			$extra_bed_price	=	0;	
+		}elseif($rowOrderDetail->adults == '3'){
+			$priceValue += $rowRoom->pkg_price+$rowRoom->extra_bed_price;	
+			$extra_bed_price	=	$rowRoom->extra_bed_price*1;	
+		}
+		if($rowOrderDetail->child == '0'){
+			$extra_bed_price_child	=	0;
+			$priceValue += $rowRoom->extra_bed_price;
+			
+		}elseif($rowOrderDetail->child == '1'){					
+			$priceValue += $rowRoom->extra_bed_price+$rowRoom->extra_bed_price;
+			$extra_bed_price_child	=	$rowRoom->extra_bed_price;	
+			
+		}elseif($rowOrderDetail->child == '2'){					
+			$priceValue += $rowRoom->extra_bed_price+$rowRoom->extra_bed_price;
+			$extra_bed_price_child	=	$rowRoom->extra_bed_price*2;	
+		}	
+			
+	}
+				$uniqueCode = 'CODE'.rand(0000,9999);				
+								
+				$start_date		=	selectColumn(TBL_RATE_SEASON,'start_date'," WHERE `id` = '".$rowOrderDetail->rate_id."'");
+				$Newcheckin = $row->checkin;
+				$Newcheckout	= $row->checkout;
+				$_SESSION['editCart'][$OrderUniqueID]['Newcheckin']	=	$Newcheckin;
+				 $query14	=	"SELECT * from `".TBL_RATE_SEASON."` WHERE ((start_date <=  '".$Newcheckin."' and end_date >= '".$Newcheckin."') OR ( start_date between '".$Newcheckin."' and '".$Newcheckin."') OR ( end_date between '".$Newcheckin."' and '".$Newcheckin."')) and id_shop='".addslashes($_SESSION['shop'])."'";
+	
+	$result14 = executeSql($query14,$link);
+	$query14count = mysqli_num_rows($result14);	
+	
+	$query14data = mysqli_fetch_array($result14);
+	$seasonIdnew	= $query14data['id'];	
+	 
+	 		
+$CheckTaxStatusSql	=	selectColumn(TBL_ORDERS,'tax_group_id'," WHERE `id_order` = '".addslashes(encryptor('decrypt',$_SESSION['eId']))."'");
+
+if($CheckTaxStatusSql	== 1){
+	
+	
+				 $resTax= executeSql("SELECT * FROM `".TBL_TAX_CONFIGURATION_TWO."` where id_shop='".addslashes($_SESSION['shop'])."' and `id_hotel` = '".addslashes($rowOrderDetail->hotel_id)."' and  `room_id` = '".addslashes($rowOrderDetail->room_id)."' and  `seasonId` = '".addslashes($seasonIdnew)."'");
+				
+		$rowTax = $db->fetch_object2($resTax);
+		$rowOrderDetail->total_price*$row->no_of_days."tax %= ".$rowTax->tax_room;
+					
+					
+					$roomTax11	=	$rowOrderDetail->total_price*$row->no_of_days*($rowTax->tax_room/100);					
+					$TaxInclusiveStatus	=	selectColumn(TBL_RATE_PLAN,'tax_detail'," WHERE `id` = '".$rowOrderDetail->rate_plan_id."'");
+			
+				if($TaxInclusiveStatus	==2){		
+					$roomTax	+=	$rowOrderDetail->total_price*($rowTax->tax_room/100);
+					$_SESSION['editCart'][$OrderUniqueID]['room_tax_price'][$uniqueCode] =  $roomTax;
+				}
+			
+}else{ //New Tax Rules Start =========================
+
+		
+		$SelectTaxDateSQL		= executeSql("SELECT * FROM `".TBL_TAX_DATE_RULE."` where id_shop='".addslashes($_SESSION['shop'])."'  order by start_date desc");
+		$SelectTaxDateRow 		= $db->fetch_object2($SelectTaxDateSQL);
+		$SlectedDateNewTax_id	= $SelectTaxDateRow->id;		
+		$uniqueCodeRequest		= $_REQUEST['uniqueCode'];
+		
+		$price 					= ($rowOrderDetail->total_price);
+		
+		$resNewTax= executeSql("SELECT * FROM `".TBL_TAX_RULE."` where id_shop='".addslashes($_SESSION['shop'])."' AND ((tax_slabs_from <=  '".$price."' and tax_slabs_to  >= '".$price."') OR ( tax_slabs_from between '".$price."' and '".$price."') OR ( tax_slabs_to between '".$price."' and '".$price."')) and tax_uniqueid='".$SlectedDateNewTax_id."'  order by start_date desc");
+		
+		if(num_rows($resNewTax) >0 ){
+				$rowNewTax = $db->fetch_object2($resNewTax);
+		
+		//echo "New Tax Calculation -Tax %". $rowNewTax->tax_percent.'=='.$rowOrderDetail->total_price."totalPrice= >".round($rowOrderDetail->total_price*($rowNewTax->tax_percent/100));
+		
+		
+				
+		$TaxInclusiveStatus1	=	selectColumn(TBL_RATE_PLAN,'tax_detail'," WHERE `id` = '".$rowOrderDetail->rate_plan_id."'");
+		
+			if($TaxInclusiveStatus1	== '2'  && $TaxInclusiveStatus1	!= '1'   &&  $TaxInclusiveStatus1	!= '3' ){
+				
+					
+				$roomTax	+=	($rowOrderDetail->total_price)*$rowOrderDetail->room_quantity*($rowNewTax->tax_percent/100);
+				$_SESSION['editCart'][$OrderUniqueID]['room_tax_price'][$uniqueCode] =  ($rowOrderDetail->total_price)*($rowNewTax->tax_percent/100);
+					
+			}
+			if($TaxInclusiveStatus1	== '1'  && $TaxInclusiveStatus1	!= '2'   &&  $TaxInclusiveStatus1	!= '3' ){	
+			
+				$_SESSION['editCart'][$OrderUniqueID]['TaxPerdayPerroom'][$UniqueDateFor][$uniqueCode]	= 0;
+				$SingleRowTaxValue	=0;
+				}
+							
+		}
+	
+	}//New Tax Rules END 
+				
+				$totalRoom += $rowOrderDetail->room_quantity;
+				$totalPrice += $rowOrderDetail->total_price*$row->no_of_days;		
+				$totalPriceTarrif += $rowOrderDetail->original_product_price*$row->no_of_days*$rowOrderDetail->room_quantity;
+				$totalPriceFood += $rowOrderDetail->food_price*$row->no_of_days;
+				$totalPriceExtra += $rowOrderDetail->extra_price*$row->no_of_days;
+				
+				
+				if($rowOrderDetail->rate_id >'0'){									
+					$disabledq = 'disabled="disabled"';					
+					}
+			
+$resRoom = executeSql("SELECT rt.name as room_name, rp.name as rate_name, rd.* from `".TBL_ORDER_DETAIL."` rd left join `".TBL_ROOM_TYPE."` rt on rd.room_id = rt.id left join `".TBL_RATE_PLAN."` rp on rd.rate_plan_id = rp.id where   rd.rate_id='".addslashes($rowOrderDetail->rate_id)."'  and room_id='".addslashes($rowOrderDetail->room_id)."' order by rd.room_id ");
+		
+				if(num_rows($resRoom) >0){	
+				
+				
+				
+				
+				$StartDateListFor	=strtotime($row->checkin);
+				
+			
+			$totalAdult		+=	$rowOrderDetail->room_quantity*$rowOrderDetail->adults;
+			$totalChild += $rowOrderDetail->room_quantity*($rowOrderDetail->child);		
+			
+			
+			$totalInfant += $rowOrderDetail->room_quantity*($rowOrderDetail->infants);
+			
+			$_SESSION['editCart'][$OrderUniqueID]['RoomUniqueCode'][]	=	$uniqueCode;
+	for($i=0;$i<$noOfDays;$i++){	
+
+
+		$UniqueDateFor = date ("d-m-Y", $StartDateListFor); 
+		
+		
+		$_SESSION['editCart'][$OrderUniqueID]['dataValue'][$UniqueDateFor][$uniqueCode] = 	'dateValue|'.$rowOrderDetail->hotel_id.'|'.$rowOrderDetail->room_id.'|'.$rowOrderDetail->rate_id.'|'.$rowOrderDetail->rate_plan_id.'|'.$rowOrderDetail->rate_assign_id.'|'.$rowOrderDetail->type;
+		
+		
+		$_SESSION['editCart'][$OrderUniqueID]['room_type_id'][$UniqueDateFor][$uniqueCode]=$rowOrderDetail->room_id;
+		$_SESSION['editCart'][$OrderUniqueID]['extra_bed_price'][$UniqueDateFor][$uniqueCode]	= $extra_bed_price;
+		$_SESSION['editCart'][$OrderUniqueID]['extra_bed_price_child'][$UniqueDateFor][$uniqueCode]	= $extra_bed_price_child;	
+				
+				$_SESSION['editCart'][$OrderUniqueID]['room_quantity'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->room_quantity;
+				
+				$_SESSION['editCart'][$OrderUniqueID]['infant_no'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->infants;
+				$_SESSION['editCart'][$OrderUniqueID]['child_no'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->child;
+				$_SESSION['editCart'][$OrderUniqueID]['tarrif_price'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->tarrif_price_per_day;				
+				$_SESSION['editCart'][$OrderUniqueID]['pkg_extra'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->extra_price;
+				$_SESSION['editCart'][$OrderUniqueID]['room_price'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->total_price;
+				$_SESSION['editCart'][$OrderUniqueID]['tarrif'][$UniqueDateFor][$uniqueCode] = (($rowOrderDetail->total_price)/$rowOrderDetail->room_quantity);
+				$_SESSION['editCart'][$OrderUniqueID]['meal'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->food_price_per_day;
+				$_SESSION['editCart'][$OrderUniqueID]['TaxPerdayPerroom'][$UniqueDateFor][$uniqueCode] = $rowOrderDetail->tax_perday_perroom;
+				$_SESSION['editCart'][$OrderUniqueID]['rate_plan_id'][$UniqueDateFor][$uniqueCode]	= $rowOrderDetail->rate_plan_id;
+				
+				$_SESSION['editCart'][$OrderUniqueID]['adult_no'][$UniqueDateFor][$uniqueCode]=$rowOrderDetail->adults;
+				
+				
+		$StartDateListFor	=	strtotime("+1 day", strtotime($UniqueDateFor));
+	}
+		
+			$_SESSION['editCart'][$OrderUniqueID]['room_type_id'][$UniqueDateFor][$uniqueCode];	
+					$rowRoom = $db->fetch_object2($resRoom);
+					$availableData = '<tr id="'.$uniqueCode.'" class="ajaxAddRoom">';
+$availableData .=' <td><select class="form-control"  name="room_type_id[]" id="room_type_id|'.$uniqueCode.'" data-parsley-required  onchange="newTaxOnChange($(this).attr(\'id\'));  getRateEdit($(this).attr(\'id\'));" '.$disabledq.'>
+											  <option value="">Room Type</option>';
+										
+									
+											  $resCat_rooms = executeSql("SELECT rt.name, ahr.hotel_id,ahr.inventory, ahr.room_id,ahr.double_pax_price from `fs_assign_hotel_room` ahr left join `fs_room_type` rt on ahr.room_id = rt.id where rt.status='1' and ahr.hotel_id=".addslashes($rowOrderDetail->hotel_id));
+											  
+											  	while($rowInclusion = $db->fetch_object2($resCat_rooms)){
+													if($_SESSION['editCart'][$OrderUniqueID]['room_type_id'][$UniqueDateFor][$uniqueCode] == $rowInclusion->room_id){
+													   $selected = 'selected="selected"';
+													}else{
+														$selected = '';
+													}
+													
+													$availableData .= '<option '.$selected.' value="'.$rowInclusion->room_id.'">'.ucfirst($rowInclusion->name).'</option>';
+												
+											  }
+											 	 $availableData .= '</select></td>';
+			if($rowOrderDetail->rate_id >'0'){									 
+			 $availableData .='<input type="hidden" name="room_type_id[]" value="'.$rowOrderDetail->room_id.'|'.$uniqueCode.'">';
+			// $availableData .='<input type="hidden" class="form-control input-sm"   name="tarrif[]"  id="tarrif|'.$uniqueCode.'" value="'.round($_SESSION['editCart'][$OrderUniqueID]['tarrif'][$uniqueCode],0,PHP_ROUND_HALF_UP).'" style="width: 80px;" data-parsley-type="digits" onKeyUp="getRateEdit(\'tarrif|'.$uniqueCode.'\');" >';		
+			}
+$availableData .=' <td><strong><select class="form-control " name="rate_plan_id[]" id="rate_plan_id|'.$uniqueCode.'"  data-parsley-required  onchange="newTaxOnChange($(this).attr(\'id\')); getRateEdit($(this).attr(\'id\'));"  '.$disabledq.'>
+											  <option value="">Rate Plan</option>';
+	  $resCat = selectSql(TBL_RATE_PLAN," where status='1' and id_shop='".addslashes($_SESSION['shop'])."' ",'  order by display_order');
+											 
+											  	while($resultCat = $db->fetch_object2($resCat)){
+													if($_SESSION['editCart'][$OrderUniqueID]['rate_plan_id'][$UniqueDateFor][$uniqueCode] == $resultCat->id){
+													   $selected3 = 'selected="selected"';
+													}else{
+														$selected3 = '';
+													}
+													
+													
+													
+													$availableData .= '<option '.$selected3.' value="'.$resultCat->id.'">'.ucfirst($resultCat->name).'</option>';
+													
+												}
+											 	 $availableData .= '</select></strong></td></strong></td>';
+												 		
+$availableData .=' <td> <select class="form-control input-sm" name="room_quantity[]" id="room_quantity|'.$uniqueCode.'" data-parsley-required onchange="newTaxOnChange($(this).attr(\'id\')); getRateEdit($(this).attr(\'id\'));" >';		
+				
+				for ($i=1; $i<=100; $i++)
+    				{
+        
+            $availableData .='<option value="'.$i.'"';
+			 if($rowOrderDetail->room_quantity ==$i){
+			 $availableData .='selected="selected"';
+			 }
+			 
+			 $availableData .='>'.$i.'</option>';
+       
+    }
+
+                $availableData .='</select></td>	
+				<input type="hidden" name="uniqueCode[]" value="'.$uniqueCode.'" id="uniqueCode|'.$uniqueCode.'">
+				<input id="dataValue" type="hidden" name="dataValue[]" value="dateValue|'.$rowOrderDetail->hotel_id.'|'.$rowOrderDetail->room_id.'|'.$rowOrderDetail->rate_id.'|'.$rowOrderDetail->rate_plan_id.'|'.$rowOrderDetail->rate_assign_id.'|'.$rowOrderDetail->type.'" id="dataValue|'.$uniqueCode.'">			
+				  <td><select class="form-control input-sm" name="adult_no[]" id="adult_no|'.$uniqueCode.'" data-parsley-required  onchange="newTaxOnChange($(this).attr(\'id\')); getRateEdit(\'adult_no|'.$uniqueCode.'\');">';
+				if($rowOrderDetail->adults == '1' ){$selectedAdultNo1 =  'selected="selected"';}else{$selectedAdultNo1 =''; }
+				if($rowOrderDetail->adults == '2' ){$selectedAdultNo2 =  'selected="selected"';}else{$selectedAdultNo2 =''; }
+				if($rowOrderDetail->adults == '3' ){$selectedAdultNo3 =  'selected="selected"';}else{$selectedAdultNo3 =''; }
+$availableData .='<option value="1" '.$selectedAdultNo1.'>1</option>
+				  <option value="2" '.$selectedAdultNo2.'>2</option>                				
+				  <option value="3" '.$selectedAdultNo3.'>3</option></select></td>
+				<td> <select class="form-control input-sm" name="infant_no[]" id="infant_no|'.$uniqueCode.'" data-parsley-required onchange="newTaxOnChange($(this).attr(\'id\')); getRateEdit($(this).attr(\'id\'));">';
+				if($rowOrderDetail->infants == '0' ){$selectedChildNo1 =  'selected="selected"';}else{$selectedChildNo1 =''; }
+				if($rowOrderDetail->infants == '1' ){$selectedChildNo2 =  'selected="selected"';}else{$selectedChildNo2 =''; }
+				if($rowOrderDetail->infants == '2' ){$selectedChildNo3 =  'selected="selected"';}else{$selectedChildNo3 =''; }
+$availableData .=' <option value="0" '.$selectedChildNo1.'>0</option>
+				   <option value="1" '.$selectedChildNo2.'>1</option>
+				   <option value="2" '.$selectedChildNo3.'>2</option>
+                </select></td>				
+				  <td> <select class="form-control input-sm" name="child_no[]" id="child_no|'.$uniqueCode.'" data-parsley-required onchange="newTaxOnChange($(this).attr(\'id\')); getRateEdit($(this).attr(\'id\'));">';
+				if($rowOrderDetail->child == '0' ){$selectedChildNo1 =  'selected="selected"';}else{$selectedChildNo1 =''; }
+				if($rowOrderDetail->child == '1' ){$selectedChildNo2 =  'selected="selected"';}else{$selectedChildNo2 =''; }
+				if($rowOrderDetail->child == '2' ){$selectedChildNo3 =  'selected="selected"';}else{$selectedChildNo3 =''; }
+$availableData .='<option value="0" '.$selectedChildNo1.'>0</option>
+				   <option value="1" '.$selectedChildNo2.'>1</option>
+				   <option value="2" '.$selectedChildNo3.'>2</option>
+                </select></td>';
+				
+$availableData .='<td id="trafficprice_'.$uniqueCode.'"><input type="text" class="form-control input-sm"   name="tarrif[]"  id="tarrif|'.$uniqueCode.'" value="'.round((($rowOrderDetail->total_price)/$rowOrderDetail->room_quantity),0,PHP_ROUND_HALF_UP).'" style="width: 80px;" data-parsley-type="digits" onKeyUp="newTaxOnChange($(this).attr(\'id\')); getRateEdit(\'tarrif|'.$uniqueCode.'\');" '.$disabledq.'></td>';
+
+
+/*$availableData .='<td><input type="text" class="form-control input-sm"  name="meal[]"  id="meal|'.$uniqueCode.'"  value="'.round($_SESSION['editCart'][$OrderUniqueID]['meal'][$uniqueCode],0,PHP_ROUND_HALF_UP).'" style="width: 80px;" data-parsley-type="digits" onKeyUp="getRateEdit(\'meal|'.$uniqueCode.'\');"></td>';
+	*/			
+				
+		
+	$availableData .='<td id="TaxPerdayPerroom_'.$uniqueCode.'"><input type="text" class="form-control input-sm"  name="TaxPerdayPerroom[]"  id="TaxPerdayPerroom|'.$uniqueCode.'"  value="'.$rowOrderDetail->tax_perday_perroom.'" style="width: 80px;" readonly ></td>';
+
+	//$availableData .='<td id="inclusive_tax_'.$uniqueCode.'"><input type="text" class="form-control input-sm"  name="inclusive_tax[]"  id="inclusive_tax|'.$uniqueCode.'"  value="test" style="width: 80px;" data-parsley-type="digits" onKeyUp="getRateEdit(\'inclusive_tax|'.$uniqueCode.'\');"  ></td>';
+			
+							 
+$availableData .='<td id="price_'.$uniqueCode.'"><strong><i class="fa fa-inr"></i> '.($rowOrderDetail->total_price+($_SESSION['editCart'][$OrderUniqueID]['meal'][$uniqueCode]))*$row->no_of_days.'</strong>&nbsp;&nbsp;';
+
+/*<span class="pricePopUp_open" onclick="CheckRoomPlan(this.id);" onclick="pricePopUp(this.id);  id="pricePopUp_'.$uniqueCode.'" ><i class="fa fa-pencil"></i></span>*/
+
+$availableData .='</td> 
+<input type="hidden" name="tax_group_id" id="tax_group_id|'.$uniqueCode.'" value="'.$CheckTaxStatusSql.'">
+ 
+				  <td> <a class="btn btn-danger btn-sm" href="javascript:void(0);" id="'.$uniqueCode.'" onclick="ajaxRoomRemove($(this).attr(\'id\'));");">
+				  <i class="fa fa-trash-o fa-lg"></i> </a></td>              
+                </tr>';
+					}
+			  	$i++;
+				echo $availableData;
+				}
+				
+				
+				
+			
+			}		
+	
+$_SESSION['editCart'][$OrderUniqueID]['totalRoom']= $totalRoom;
+$_SESSION['editCart'][$OrderUniqueID]['totalAdult']= $totalAdult;
+$_SESSION['editCart'][$OrderUniqueID]['totalChild']= $totalChild;
+$_SESSION['editCart'][$OrderUniqueID]['totalInfant']= $totalInfant;
+$_SESSION['editCart'][$OrderUniqueID]['totalPrice'] = $totalPrice;
+
+$_SESSION['editCart'][$OrderUniqueID]['totalPriceTarrif'] = $totalPriceTarrif;
+$_SESSION['editCart'][$OrderUniqueID]['totalPriceFood'] = $totalPriceFood;
+$_SESSION['editCart'][$OrderUniqueID]['totalPriceExtra'] = $totalPriceExtra;
+$_SESSION['editCart'][$OrderUniqueID]['finalPrice']  = round((($_SESSION['editCart'][$OrderUniqueID]['totalPrice']-$_SESSION['editCart'][$OrderUniqueID]['discountPrice'])+$_SESSION['editCart'][$OrderUniqueID]['room_tax_price'][$uniqueCode]+$_SESSION['editCart'][$OrderUniqueID]['AdditionalCharges'][$uniqueCode]),0,PHP_ROUND_HALF_UP);
+				?>
+                         </table>
+                      </div>
+                   
+                      
+                       <div class="row"> 
+                        <!-- accepted payments column -->
+                        
+                        
+                 
+                        
+                        
+                        <div class="col-sm-7 text-muted well well-sm no-shadow"  style="width:100% !important" >
+                          <div style="color:#FF0000;" ><?php echo $row->rate_text; ?> </div>
+                           <div style="float: left;width: 100%;">
+                            <p class="lead" style="width: 200px;float: left;margin: 0px;">Charges:</p>
+                            <button class="pull-left btn btn-success btn-xs" type="button" onclick="ajaxAddothercharges('.$row->id.','.$row->rate_assign_id.','.$rowRoom->room_id.','.$rowRoom->rate_plan_id.',0);" style="margin: 0px;" ><i class="fa fa-plus-circle"></i></button>
+                          </div>
+                          
+                          
+                           <p id="addchargesMsg" align="center"></p>
+                           <table class="table table-hover" style="margin-bottom:0px;" >
+                            <tr>
+                               <th style="width: 200px;">Charges</th>
+                              
+                               <th>Amount</th>
+                               <th>Nos</th>
+                               <th>Tax %</th>
+                               <th>Tax Value</th>
+                               <th>Net Value</th>
+                             </tr>
+                            <?php 
+				$sqlOtherChargesDetail 		= executeSql("Select * from `".TBL_OTHERCHARGES_DETAIL."` where id_order='".addslashes($row->id_order)."'");
+		
+		$NUmber 				=	num_rows($sqlOtherChargesDetail);
+			
+				while($rowOtherChargesDetail	= $db->fetch_object2($sqlOtherChargesDetail)){
+
+				$OtherChargesuniqueCode 		= 'OTHERCHARGE'.rand(0000,9999);
+				$_SESSION['editCart'][$OrderUniqueID]['OtherChargesUniqueCodeID'][]	= $OtherChargesuniqueCode;
+				$_SESSION['editCart'][$OrderUniqueID]['id_othercharges_detail'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->id_othercharges_detail;
+				$_SESSION['editCart'][$OrderUniqueID]['charges_description'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_description_id;
+				
+				$_SESSION['editCart'][$OrderUniqueID]['charges_tax'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_tax_percentage;
+				$_SESSION['editCart'][$OrderUniqueID]['charges_total'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_tax_value;
+				$_SESSION['editCart'][$OrderUniqueID]['charges_net'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_net;
+				$_SESSION['editCart'][$OrderUniqueID]['otherChargeType'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_method;
+				
+				
+					$LessOtherChargesTax +=	$_SESSION['editCart'][$OrderUniqueID]['charges_total'][$OtherChargesuniqueCode];
+				if($rowOtherChargesDetail->charges_noofdays	==0){
+					
+					$_SESSION['editCart'][$OrderUniqueID]['otherChargeTypeNoOfDays'][$OtherChargesuniqueCode] = 1;
+					}else{
+					
+						
+						$_SESSION['editCart'][$OrderUniqueID]['otherChargeTypeNoOfDays'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_noofdays;
+						}
+				
+				
+				
+				
+				$_SESSION['editCart'][$OrderUniqueID]['charges_price'][$OtherChargesuniqueCode] = $rowOtherChargesDetail->charges_price;
+				
+			$availableData = '<tr id="'.$OtherChargesuniqueCode.'" class="ajaxAddRoom" >';
+			
+$availableData .=' <td><input type="text" class="form-control"  name="charges_description|'.$OtherChargesuniqueCode.'" id="charges_description|'.$OtherChargesuniqueCode.'" value="'.$_SESSION['editCart'][$OrderUniqueID]['charges_description'][$OtherChargesuniqueCode].'"  placeholder="Charges Description." onKeyUp="calculateOthercharge(\'charges_description|'.$OtherChargesuniqueCode.'\');" data-parsley-required></td>';	
+
+/*$availableData .='<td style="padding: 8px 7px;"><div class="col-sm-3"><select class="form-control" name="otherChargeType|'.$OtherChargesuniqueCode.'" id="otherChargeType|'.$OtherChargesuniqueCode.'" onchange="calculateOthercharge(\'otherChargeType|'.$OtherChargesuniqueCode.'\');" style="width: 100px;" s>
+                               <option value="1" '.$selectedCharge1.' >Net</option>
+                               <option value="2" '.$selectedCharge2.'>Per Day</option>
+                             </select></div></td>';*/
+							 
+$availableData .='<input type="hidden" class="form-control"  name="id_othercharges_detail|'.$OtherChargesuniqueCode.'" id="id_othercharges_detail|'.$OtherChargesuniqueCode.'" value="'.$_SESSION['editCart'][$OrderUniqueID]['id_othercharges_detail'][$OtherChargesuniqueCode].'" >';
+
+
+
+
+$availableData .=' <td ><input type="text" class="form-control"  name="charges_price|'.$OtherChargesuniqueCode.'" id="charges_price|'.$OtherChargesuniqueCode.'" value="'.$rowOtherChargesDetail->charges_price.'"  onKeyUp="calculateOthercharge(\'charges_price|'.$OtherChargesuniqueCode.'\');"></td>';	
+
+
+$availableData .=' <td  ><div id="otherChargeTypeNoOfDays_'.$OtherChargesuniqueCode.'"><input type="text" class="form-control"  name="otherChargeTypeNoOfDays|'.$OtherChargesuniqueCode.'" id="otherChargeTypeNoOfDays|'.$OtherChargesuniqueCode.'" value="'.$_SESSION['editCart'][$OrderUniqueID]['otherChargeTypeNoOfDays'][$OtherChargesuniqueCode].'"  autocomplete="off" onKeyUp="calculateOthercharge(\'otherChargeTypeNoOfDays|'.$OtherChargesuniqueCode.'\');" ></div>
+
+<input type="hidden" class="form-control"  name="ChargeNoOfDays|'.$OtherChargesuniqueCode.'" id="ChargeNoOfDays|'.$OtherChargesuniqueCode.'" value="'.$noOfDays.'" ></td>';
+
+
+		
+
+echo $availableData .='<td>
+				  <input type="text" class="form-control" id="charges_tax|'.$OtherChargesuniqueCode.'" name="charges_tax|'.$OtherChargesuniqueCode.'" value="'.$_SESSION['editCart'][$OrderUniqueID]['charges_tax'][$OtherChargesuniqueCode].'" onKeyUp="calculateOthercharge(\'charges_tax|'.$OtherChargesuniqueCode.'\');" autocomplete="off" >
+                    
+                      
+                    </td>
+				 <td ><input type="text" class="form-control"  name="charges_total|'.$OtherChargesuniqueCode.'" id="charges_total|'.$OtherChargesuniqueCode.'" value="'.$_SESSION['editCart'][$OrderUniqueID]['charges_total'][$OtherChargesuniqueCode].'"  onKeyUp="calculateOthercharge(\'charges_total|'.$OtherChargesuniqueCode.'\');"></td>
+				 
+				 <td ><input type="text" class="form-control"  name="charges_net|'.$OtherChargesuniqueCode.'" id="charges_net|'.$OtherChargesuniqueCode.'" value="'.$_SESSION['editCart'][$OrderUniqueID]['charges_net'][$OtherChargesuniqueCode].'"  onKeyUp="calculateOthercharge(\'charges_net|'.$OtherChargesuniqueCode.'\');"></td>
+				 
+				  <td ><a class="btn btn-danger btn-sm" href="javascript:void(0);"  id="'.$OtherChargesuniqueCode.'" onclick="ajaxOtherChargesRemove($(this).attr(\'id\'));");">
+				  <i class="fa fa-trash-o fa-lg"></i> </a></td>              
+                </tr>';?>
+                            <?php } ?>
+                          </table>
+                           <div id="showOtherCharges"></div>
+                           
+                           
+                       
+                           
+                           
+                           
+                          
+                          
+                           
+                           <div class="col-sm-12">
+                           
+                          </div>
+                         </div>
+                        
+                        
+                        
+                        <div style=" width:100%; float:left;">
+                        
+                        <div style="width:65%;float:left;">
+                        <div class="col-sm-7 text-muted well well-sm no-shadow"  style="width: 100%;">
+                           
+                            <?php
+                          //  echo "<pre>";print_r($_SESSION);		echo "</pre>";
+ 
+		$_SESSION['editCart'][$OrderUniqueID]['taxablePrice'] = $row->total_tax-$LessOtherChargesTax;
+		$_SESSION['editCart'][$OrderUniqueID]['discountVar']	=	$row->discount_var;
+		$_SESSION['editCart'][$OrderUniqueID]['discountType']	=	$row->discount_type;
+		?>
+                           <p class="lead" style="float: left;width: 100%;margin: 0px;">Discount:</p>
+                           <p id="discountMsg" align="center" style="color:red;"></p>
+                           <p class="col-sm-3" style="margin-top: 10px;">Apply Discount </p>
+                           <div class="col-sm-3">
+                            <select class="form-control" name="discountType" id="discountType" onChange="discounttype(this.value);">
+                               <option value="1" <?php if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '1' ){echo 'selected="selected"';} ?>>Flat</option>
+                               <option value="2" <?php if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '2' ){echo 'selected="selected"';} ?>>Percentage</option>
+                             </select>
+                          </div>
+                           <div class="col-sm-4" id="flat" <?php if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '1' ){echo 'style="display:block;"';}else if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '2'){echo 'style="display:none;"';} else  { echo 'style="display:block;"'; } ?>  >
+                            <div class="input-group">
+                               <div class="input-group-btn">
+                                <button type="button" class="btn btn-info btn-flat"><i class="fa fa-inr"></i> </button>
+
+                              </div>
+                               <!-- /btn-group -->
+                               <input type="text" class="form-control" id="flatDiscount" value="<?php if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '1' ){echo $_SESSION['editCart'][$OrderUniqueID]['discountVar']; }else{ echo "0";}?>" autocomplete="off">
+                             </div>
+                          </div>
+                           <div class="col-sm-4" id="percent" <?php if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '2' ){echo 'style="display:block;"';}else {echo 'style="display:none;"';} ?>>
+                            <div class="input-group">
+                               <input type="text" class="form-control" id="percentDiscount" value="<?php if($_SESSION['editCart'][$OrderUniqueID]['discountType'] == '2' ){echo $_SESSION['editCart'][$OrderUniqueID]['discountVar'];}?>" autocomplete="off">
+                               <span class="input-group-btn">
+                              <button type="button" class="btn btn-info btn-flat"><i class="fa fa-percent"></i></button>
+                              </span> </div>
+                          </div>
+                           <div class="col-sm-2 ">
+                            <button type="button" class="btn btn-primary" onClick="applyDiscount();">Apply</button>
+                          </div>
+                          
+                          
+                           
+                           <div class="col-sm-12">
+                            <?php $row->rate_text; ?>
+                          </div>
+                         </div>
+                 <!--------Evoucher Start----------------->  
+                 
+                 <?php
+                          //  echo "<pre>";print_r($_SESSION);		echo "</pre>";
+ 
+		
+		$_SESSION['editCart'][$OrderUniqueID]['EvoucherPassCode']	=	$row->vaoucher_pass_code;
+		$_SESSION['editCart'][$OrderUniqueID]['EvoucherValue']	=	$row->vaoucher_value;
+		?>
+        
+              
+                       <div class="col-sm-7 text-muted well well-sm no-shadow" style="width: 100%;" >
+                          <p class="lead" style="margin-bottom:0px" >Evoucher:</p>
+                           <p id="EvoucherMsg" align="center" style="color:red;"> </p>
+                           <p class="col-sm-3">Apply Code </p>
+                           <div class="col-sm-3">
+                            <input type="text" class="form-control" id="EvoucherPassCode" name="EvoucherPassCode" value="<?php echo $_SESSION['editCart'][$OrderUniqueID]['EvoucherPassCode']; ?>" autocomplete="off">
+                          </div>
+                          
+                          <div class="col-sm-4" id="EvoucherValueDisplay" >
+                            <input type="text" class="form-control" id="EvoucherValue" name="EvoucherValue" value="<?php echo $_SESSION['editCart'][$OrderUniqueID]['EvoucherValue']; ?>" autocomplete="off" disabled>
+                          </div>
+                           
+                           
+                           <div class="col-sm-2 ">
+                            <button type="button" class="btn btn-primary" onClick="applyEvoucher();">Apply</button>
+                          </div>
+                          
+                         </div>  
+                         
+                         </div>
+                                         <!--------Evoucher END----------------->     
+                                         
+                    <div style=" float:left;width: 35%;">
+                        <!-- /.col -->
+                        <div class="col-sm-5" style="width: 100%;">
+                           <div class="table-responsive" id="pricingValue"  style="width: 100%;">
+                            <table class="table" >
+                               <tr>
+                                <th style="width:50%">Subtotal:</th>
+                                <td id="subtotal"><i class="fa fa-inr"></i> <?php echo round($row->subtotal,2); ?></td>
+                              </tr>
+                               <tr>
+                                <th>Additional Charges:</th>
+                                <td id="addchargesvalue"><i class="fa fa-inr"></i> <?php echo round($row->total_addcharges,2); ?></td>
+                              </tr>
+                               <tr>
+                                <th>Discount:</th>
+                                <td id="discount"><i class="fa fa-inr"></i> <?php echo round($row->total_discounts,2); ?></td>
+                              </tr>
+                               <tr>
+                                <th>Tax </th>
+                                <td id="tax"><i class="fa fa-inr"></i> <?php echo round($row->total_tax); ?></td>
+                              </tr>
+                               <tr>
+                                <th>Total:</th>
+                                <td id="totalPrice"><i class="fa fa-inr"></i> <?php echo round($row->total_price,2); ?></td>
+                              </tr>
+                               <tr>
+                                <th>Amount Received:</th>
+                                <td id="amountReceived" ><i class="fa fa-inr"></i> <?php echo round($row->amount_received,2); ?></td>
+                              </tr>
+                               <tr>
+                                <th>Balance:</th>
+                                <td id="balance"><i class="fa fa-inr"></i> <?php echo round($row->balance,2); ?></td>
+                              </tr>
+                             </table>
+                            <b></b> </div>
+                         </div>
+                    </div>     
+                         </div>
+                         
+                        <!-- /.col --> 
+                      </div>
+                     </div>
+                  </li>
+                  
+
+                   
+                  
+                   <li class="time-label"> <span class="bg-gray"> <?php echo date("d M, Y"); ?> </span> </li>
+                   <!-- /.timeline-label --> 
+                   <!-- timeline item -->
+                 </ul>
+                 
+                  
+   
+   
+                <?php if($row->date_created){?>
+                <div class="clearfix"></div>
+                <div class="form-group col-sm-4">
+                   <label for="date_created">Date Created</label>
+                   <input type="text" disabled="disabled" class="form-control" id="date_created"  value="<?php echo stripslashes(dateformat($row->date_created));?>">
+                 </div>
+                <div class="form-group col-sm-4">
+                   <label for="last_modified">Last Updated</label>
+                   <input type="text" disabled="disabled" class="form-control" id="last_modified" value="<?php echo stripslashes(dateformat($row->last_modified));?>">
+                 </div>
+                <div class="form-group col-sm-4">
+                   <label for="last_modified_by">Last Updated By</label>
+                   <?php $sqlUserDetail = $db->fetch_obj2(selectSql(TBL_USERS,"WHERE `id` = '".$row->last_modified_by."'",''));?>
+                   <input type="text" disabled="disabled" class="form-control"  id="last_modified_by"  value="<?php echo stripslashes($sqlUserDetail->username);?>">
+                 </div>
+                <?php } ?>
+              </div>
+              <?php // } ?>
+   
+   <div  id="SeriesBookingMasterDetail"> </div>
+   
+              
+               <!-- /.box-body -->
+               <div class="box-footer" style="float: left;width: 98%;">
+                <input type='submit' value='<?=($_REQUEST['eId']==''?'Add':'Edit')?>' class="btn btn-primary" name="Save" >
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <input type='button' value='Cancel' class="btn btn-default" onclick='location.replace("manageOrders.php"); '>
+              </div>
+             </form>
+          </div>
+           <!-- /.box --> 
+         </div>
+      </div>
+       <!-- /.row --> 
+     </section>
+    <!-- /.content --> 
+  </div>
+  
+  
+   
+   <div id="pricePopUp" class="well" style="display:none;">
+    <form id="pricePopUpform" data-parsley-validate autocomplete="off" method="post"  >
+       <input type="hidden" id="uniqueCode" name="uniqueCode" >
+       <div class="form-group">
+        <label for="tarrif">Tarrif Per Night/Room</label>
+        <input type="text" class="form-control input-sm" placeholder="Enter tarrif price" id="tarrif" name="tarrif" value="" data-parsley-required data-parsley-type="digits">
+      </div>
+       <div class="form-group">
+        <label for="meal">Meal Price</label>
+        <input type="text" class="form-control input-sm" placeholder="Enter meal price" id="meal" name="meal" value="" data-parsley-type="digits">
+      </div>
+       <div class="form-group">
+        <label for="extra">Extra Price</label>
+        <input type="text" class="form-control input-sm" placeholder="Enter extra price" id="extra" name="extra" value="" data-parsley-type="digits">
+      </div>
+       <input  type="button" class="btn btn-default" onClick="savepricePopUpform();" value="Save">
+       <button class="pricePopUp_close btn btn-default">Close</button>
+     </form>
+  </div>
+   <!---- pop up--->
+   <div id="planDetail" class="well" style="display:none; min-width:55em;"> <a href="#" class="planDetail_close" style="float:right;padding:0 0.4em;"><i class="fa fa-times text-red"></i></a>
+    <div id="ajaxPlanData"></div>
+  </div>
+   <div id="guest" class="well">
+    <form id="guestpopupform" data-parsley-validate autocomplete="off" method="post"  >
+       <div class="form-group">
+        <label class="title">Title</label>
+        <select name="title"  class="form-control input-sm" data-parsley-required >
+           <option value="">-Select-</option>
+           <option value="Dr.">Dr.</option>
+           <option value="Miss.">Miss.</option>
+           <option value="Mr.">Mr.</option>
+           <option value="Mrs.">Mrs.</option>
+           <option value="Ms.">Ms.</option>
+           <option value="Pr.">Pr.</option>
+           <option value="Prof.">Prof.</option>
+           <option value="Rev.">Rev.</option>
+           <option value="Group.">Group.</option>
+         </select>
+      </div>
+       <div class="form-group">
+        <label for="first_name">First Name</label>
+        <input type="text" class="form-control input-sm" placeholder="Enter first name" id="first_name" name="first_name" value="" data-parsley-required >
+      </div>
+       <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input type="text" class="form-control input-sm" placeholder="Enter last name" id="last_name" name="last_name" value="" data-parsley-required>
+      </div>
+       <div class="form-group">
+        <label for="email" >Email Id</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="Enter Email Id" data-parsley-type="email" automcomplete="off">
+      </div>
+       <div class="form-group">
+        <label for="mobile" >Mobile No.</label>
+        <input type="phone" name="mobile" id="mobile" class="form-control" placeholder="Enter mobile number"  data-parsley-type="digits" data-parsley-length="[10, 10]" automcomplete="off">
+      </div>
+       <div class="form-group">
+        <label for="id_country" >Country</label>
+        <select class="form-control" name="id_country" id="id_country" data-parsley-required>
+           <option value="">Select Country</option>
+           <?php 
+						$resCat = selectSql(TBL_COUNTRY_LANG,"where id_lang='1' ",' ORDER BY `name`');
+									  
+										while($resultCat = $db->fetch_object2($resCat)){
+											
+													
+											$countryDropDown .= '<option  value="'.$resultCat->id_country.'">'.ucfirst($resultCat->name).'</option>';
+									  }
+												  echo $countryDropDown;
+									
+									 ?>
+         </select>
+      </div>
+       <div class="form-group">
+        <label class="user_type">Guest type</label>
+        <select name="user_type"  class="form-control input-sm"  >
+           <option value="">-Select-</option>
+           <option value="VIP">VIP</option>
+           <option value="CIP">CIP</option>
+         </select>
+      </div>
+       <input  type="button" class="btn btn-default" onClick="saveGuestPopupform();" value="Save">
+       <button class="guest_close btn btn-default">Close</button>
+     </form>
+  </div>
+   <div id="bookedby" class="well">
+    <form id="bookedbypopupform" data-parsley-validate autocomplete="off" method="post"  >
+       <div class="form-group">
+        <label class="title">Title</label>
+        <select name="title"  class="form-control input-sm" data-parsley-required >
+           <option value="">-Select-</option>
+           <option value="Dr.">Dr.</option>
+           <option value="Miss.">Miss.</option>
+           <option value="Mr.">Mr.</option>
+           <option value="Mrs.">Mrs.</option>
+           <option value="Ms.">Ms.</option>
+           <option value="Pr.">Pr.</option>
+           <option value="Prof.">Prof.</option>
+           <option value="Rev.">Rev.</option>
+         </select>
+      </div>
+       <div class="form-group">
+        <label for="first_name">First Name </label>
+        <input type="text" class="form-control input-sm" placeholder="Enter first name" id="first_name" name="first_name" value="" data-parsley-required >
+      </div>
+       <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input type="text" class="form-control input-sm" placeholder="Enter last name" id="last_name" name="last_name" value="" data-parsley-required>
+      </div>
+       <div class="form-group">
+        <label for="email" >Email Id</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="Enter Email Id" data-parsley-type="email" automcomplete="off">
+      </div>
+       <div class="form-group">
+        <label for="mobile" >Mobile No.</label>
+        <input type="phone" name="mobile" id="mobile" class="form-control" placeholder="Enter mobile number"  data-parsley-type="digits" data-parsley-length="[10, 10]" automcomplete="off">
+      </div>
+       <input  type="button" class="btn btn-default" onClick="saveBookedbyPopupform();" value="Save">
+       <button class="bookedby_close btn btn-default">Close</button>
+     </form>
+  </div>
+     <div id="OldBookingTaxConfig" class="well" style="display:none; text-align:none !important; width:24%;"> <!--<a href="#" class="OldBookingTaxConfig_close" style="float:right;padding:0 0.4em;"><i class="fa fa-times text-red"></i></a>-->
+     <form id="inventorypopupForm" data-parsley-validate autocomplete="off" style="text-align:center;">
+	  <input type="hidden" name="start_date" id="start_date" value="" >
+	  <input type="hidden" name="end_date" id="end_date" value="" >	
+     <p> New Tax value will be Applied </p>
+    <button class="btn btn-danger" onclick="NewTaxUpdate();" type="button">Continue</button>
+    <button class="OldBookingTaxConfig_close btn btn-primary">Cancel</button>
+  </form>
+    
+  </div>
+   
+    <span class="my_popup_open" style="display:none;"></span>
+<div id="my_popup" class="well">
+    <div id="TaxUpdateData"></div>
+   <!-- <button class="my_popup_close btn btn-default pull-right">Close</button>-->
+</div>
+   <!---- pop up end---> 
+   
+   <script>
+<?php  
+if($row->id_order != ''){ ?>
+
+window.onload = function() { getContact(<?php echo $row->id_company; ?>,<?php echo $row->id_company_person; ?>);
+							
+							 document.getElementById("arrival_time").value = '<?php if($_POST) echo $_POST['arrival_time'];else if($row->arrival_time)  echo date('h:i a',strtotime(stripslashes($row->arrival_time))); else echo ''; ?>';	
+  							
+							};
+							
+<?php } ?>	
+</script>
+<!--
+Below Code is added by Hitesh Aloney on 10-08-2018 and uncommented on 13-09-2018
+This code check the credit allowed or not option on page load 
+-->
+<script type="text/javascript">
+  var cmpId = document.getElementById("id_company").value; 
+ 	
+  function checkCreditFirst(id_comp){
+    var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+			var resultArray = this.responseText.split('&&&&');			
+          document.getElementById("getcredit_value").innerHTML = resultArray['1'];
+        }
+      };
+      xhttp.open("GET", "ajax/ajaxgetcreditvalue.php?id_company="+id_comp, true);
+      xhttp.send();
+  }
+
+  checkCreditFirst(cmpId);
+</script>
+<!-- Above Code Ends Here-->
+
+<script>
+
+
+function getGetSeriesDate(){
+	
+	var seriesId = $('#series').val();
+	var operatorId = $('#operator').val();
+	var hotel_id = $('#hotel_id').val();
+	var reservation_date = $("#reservation_date").val();
+	
+		var id_company = $('#id_company').val();
+			 $.ajax({
+			   type: "GET",
+			   url: 'ajax/ajaxSeriesBookingDate.php',
+			   data: 'seriesId='+seriesId+'&operatorId='+operatorId+'&hotel_id='+hotel_id+'&id_company='+id_company+'&reservation_date='+reservation_date, 
+			   success: function (result) {	
+			   
+			   
+			   $('#reservation_date').val(result);
+			   
+				// document.getElementById("reservation_date").innerHTML = this.responseText;	
+			}
+		})
+
+}
+
+
+
+function NewTaxUpdate(){
+	
+	
+	$.ajax({
+			   type: "GET",
+			   url: 'ajax/ajaxupdateNewTax.php',
+			   data: 'dataValue=1', 
+			   success: function (result) {
+				  // alert(result);
+				 $( ".my_popup_open" ).click();	
+				 $("#TaxUpdateData").html(result);  }
+				})
+	$('#OldBookingTaxConfig').popup('hide');
+	
+	exit;
+	}
+function newTaxOnChange(uniqueCode){	
+
+	var arrayCode = uniqueCode.split("|");
+	var uniqueId = arrayCode['1'];
+	
+	var tax_group_id = $('#tax_group_id\\|'+uniqueId).val();
+	var TaxPerdayPerroom = $('#TaxPerdayPerroom\\|'+uniqueId).val();
+	
+	
+
+if(tax_group_id ==1 &&  TaxPerdayPerroom ==0){
+				$('#OldBookingTaxConfig').popup({
+        			transition: 'all 0.3s',
+           			 autoopen: true,            
+        			});
+					
+
+	
+	exit;
+			}	
+}
+
+
+function getcreditvalueNew(id_company){
+	
+var id_company = $("#id_company").val();
+var reservation_date = $("#reservation_date").val();
+var rate_id = $("#rate_id").val();
+var hotel_id = $("#hotel_id").val();
+	
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxgetcreditvalue.php',
+		   data: 'id_company='+id_company+'&reservation_date='+reservation_date+'&hotel_id='+hotel_id,  
+		   success: function (result) {	
+		   resultArray = result.split('&&&&');
+		   		$( "#getcredit_value" ).html(resultArray[1]);
+				$( "#getRecordExist" ).html(resultArray[0]);					
+			}
+		})
+
+}
+
+//////////////////////check availabilty -book-now.php///////////////////////////////////////////////// 
+
+function ajaxCheckAvailability() {
+          
+  		  var form=$("#availabiltyForm");		  
+		  form.parsley().validate();		  
+  		  $('.loading').show(); 
+		  $.ajax({
+			   type: "POST",
+			   url: 'ajax/ajaxcheckAvailability.php',
+			   data: form.serialize(), 
+			   success: function (result) {
+					$('#availabilty').html(result)
+				},
+			  complete: function(){
+				$('.loading').hide();
+			  }
+		})
+	return false;
+ }
+/////////////////////////////////show events on date -book-now.php/////////////////////////////////////////////
+function getEvents(dated){
+//$('#eventsPopup').popup('show');
+ $('#eventsPopup').popup({
+            //pagecontainer: '.container',
+        	transition: 'all 0.3s',
+            autoopen: true,            
+        });
+}
+
+
+
+////////////////////////////////////////
+
+
+/*function getRateLetter(id_company,rate_id){
+	alert("shafeer");
+ var form1=$("#availabiltyForm");	
+ var dataString = $("#availabiltyForm").serialize();	
+	if(form1.parsley().validate()){
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxGetRateLetter.php',
+		   data: dataString+'&id_company='+id_company+'&rate_id='+rate_id, 
+		   success: function (result) {					
+				$( "#rate_id" ).html(result);								
+			}
+		})
+	}
+}*/
+/////////////////////////////////show plan Details on date -book-now.php/////////////////////////////////////////////
+
+
+$("#view").click(function (){
+ var form1=$("#availabiltyForm");	
+ var form2=$("#addRoomForm");
+ var dataString = $("#availabiltyForm, #addRoomForm").serialize();	
+	if(form1.parsley().validate() && form2.parsley().validate()){
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxGetPlanDetails.php',
+		   data: dataString, 
+		   success: function (result) {					
+				$( "#ajaxPlanData" ).html(result);
+				$('#planDetail').popup({
+        			 transition: 'all 0.3s',
+           			 autoopen: true,            
+        		});
+				 //$("#hotelId").val('1').attr('selected','selected');					
+			}
+		})
+	}
+})
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+function ajaxAddRoom(rate_id,rate_assign_id,room_id,rate_plan_id,type){
+   var form1=$("#availabiltyForm");	
+   var form2=$("#addRoomForm");
+   var dataString = $("#availabiltyForm, #addRoomForm").serialize();
+	if(form1.parsley().validate() && form2.parsley().validate()){
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxaddRoom.php',
+		   data: dataString+'rate_id='+rate_id+'&rate_assign_id='+rate_assign_id+'&room_id='+room_id+'&rate_plan_id='+rate_plan_id+'&type='+type, 
+		   success: function (result) {					
+				resultArray = result.split('|||');
+					if(resultArray['0']!=''){
+						$('#roomLimitMsg').css('display', 'block');
+						$('#roomLimitMsg').html(resultArray['0']);
+					}
+					$('#showRoom').append(resultArray['1']);
+					$('#addRoommsg').css('display', 'none');
+					$('#createBooking').css('visibility', 'visible');					
+			}
+		})
+	}
+
+
+}
+
+//////////////////////////////save price popup form common//////////////////////////////////////////////////////////
+
+
+function pricePopUp(id){
+	var Id = id.split('_');
+	var uniqueId= Id[1];
+	$('#uniqueCode').val(uniqueId);
+	
+}
+
+function savepricePopUpform(){
+	var uniqueCode = $("#uniqueCode").val();
+	var dataValue = $('#dataValue'+'\\|'+uniqueCode).val();		
+	var form=$("#pricePopUpform");
+	if(form.parsley().validate()){
+	$('.loading').show(); 
+	$.ajax({
+	   type: "POST",
+	   url: 'ajax/ajaxSavePrice.php',
+	   data: form.serialize()+'&dataValue='+dataValue, 
+	   success: function (result) {
+	    $('#pricePopUp').popup('hide');
+		$("#pricePopUpform")[0].reset();
+		 alert('Price has been updated.');
+		 $('#price_'+uniqueCode).html(result);		
+		},
+	  complete: function(){
+		$('.loading').hide();
+	  }
+	});
+	return false;
+	}
+}
+
+
+
+
+
+</script>
+   <?php include_once("includes/footer.php")?>
+   
+   
+<script>
+
+
+function calculateOthercharge(id){
+var tot = 0;
+var data = new Array();
+value= id.split('|');	
+	mainId = value[0];
+	dateId = value[1];
+	
+var otherChargeType 		= parseFloat($('#otherChargeType\\|'+dateId).val());
+var charges_price 			= (isNaN(parseFloat($('#charges_price\\|'+dateId).val())) ? 0 : parseFloat($('#charges_price\\|'+dateId).val()));
+var charges_tax 			= (isNaN(parseFloat($('#charges_tax\\|'+dateId).val())) ? 0 : parseFloat($('#charges_tax\\|'+dateId).val()));
+var charges_total 			= (isNaN(parseFloat($('#charges_total\\|'+dateId).val())) ? 0 : parseFloat($('#charges_total\\|'+dateId).val()));
+//var charges_tax 			= parseFloat($('#charges_tax\\|'+dateId).val());
+//var charges_total 		= parseFloat($('#charges_total\\|'+dateId).val());
+var charges_net 			= parseFloat($('#charges_net\\|'+dateId).val());
+var charges_description 	= $('#charges_description\\|'+dateId).val();
+
+
+ var otherChargeTypeNoOfDays			= $('#otherChargeTypeNoOfDays\\|'+dateId).val();
+var totalPrice = parseFloat($('#totalPrice').val());
+
+if(charges_tax !== null && charges_tax !== '') {
+
+var total = parseFloat((charges_price*charges_tax)/100)*otherChargeTypeNoOfDays;
+}
+$('#charges_total\\|'+dateId).val(total);
+
+var netamount = +total + +charges_price*otherChargeTypeNoOfDays;
+
+$('#charges_net\\|'+dateId).val(netamount);
+var OrderUniqueID = $("#OrderUniqueID").val();
+
+$.ajax({
+	    type: "GET",
+	  	url: 'ajax/ajaxUpdateAdditionalChargesEditPage.php',
+    	data: 'discount=apply'+'&charges_total='+total+'&otherchagersid='+dateId+'&charges_tax='+charges_tax+'&charges_price='+charges_price+'&charges_description='+charges_description+'&charges_net='+charges_net+'&otherChargeType='+otherChargeType+'&otherChargeTypeNoOfDays='+otherChargeTypeNoOfDays+'&OrderUniqueID='+OrderUniqueID, 
+    cache: false,
+	   
+	   success: function (result) {
+		 var  resultArray = result.split('|||');
+		// $('#discount').html(resultArray['0']);		
+		//alert(result);
+		 $('#addchargesvalue').html(resultArray['0']);	
+		 $('#totalPrice').html(resultArray['1']);	
+		 $('#balance').html(resultArray['3']);			
+		 $('#tax').html(resultArray['2']);	
+		 var  resultArray1 = resultArray['4'].split('###');
+		 
+		 $('#otherChargeTypeNoOfDays_'+resultArray1['1']).html(resultArray1['0']);	
+		// $('#TaxPerdayPerroom_'+uniqueId).html(resultArray['1']);	 	
+	/*	// $('#balance').html(resultArray['3']);
+		 var  resultArray1 = resultArray['4'].split('###');
+		$('#otherChargeTypeNoOfDays|'+resultArray1['1']).html(resultArray['3']);*/	  		
+		}
+	});
+ 
+}
+
+
+
+
+
+
+//window.onbeforeunload = function() { return "Your work will be lost."; };
+function discounttype(discountType) {
+	if(discountType == '1' ){
+		$("#flat").css('display', 'block');
+		$("#percent").css('display', 'none');
+	}else{
+		$("#flat").css('display', 'none');
+		$("#percent").css('display', 'block');
+	}
+}
+function applyDiscount() {
+var discountType = $('#discountType').val();
+	if(discountType == '1' ){
+		var discountVar = $('#flatDiscount').val();
+	}else{
+		var discountVar = $('#percentDiscount').val();
+	}
+var OrderUniqueID = $("#OrderUniqueID").val();
+ $.ajax({
+	   type: "GET",
+	   url: 'ajax/ajaxUpdateDiscountEditPage.php',
+	   data: 'discount=apply'+'&discountType='+discountType+'&discountVar='+discountVar+'&OrderUniqueID='+OrderUniqueID, 
+	   success: function (result) {
+		 var  resultArray = result.split('|||');	
+		 $('#discount').html(resultArray['0']);	
+		 $('#totalPrice').html(resultArray['1']);				
+		 $('#discountMsg').html(resultArray['2']);	
+		 $('#balance').html(resultArray['3']);	  
+		
+		}
+	});
+
+}
+
+function applyEvoucher() {
+	
+var EvoucherPassCode = $('#EvoucherPassCode').val();
+
+var EvoucherValue = $("#EvoucherValue").val();
+var OrderUniqueID = $("#OrderUniqueID").val();
+
+ $.ajax({
+	   type: "GET",
+	   url: 'ajax/ajaxUpdateEvoucherEditPage.php',
+	   data: 'Evoucher=apply'+'&EvoucherPassCode='+EvoucherPassCode+'&EvoucherValue='+EvoucherValue+'&OrderUniqueID='+OrderUniqueID+'&OrderUniqueID='+OrderUniqueID, 
+	   success: function (result) {		 
+		   if(result	== '1'){
+			   $('#EvoucherMsg').html('Please Enter Evoucher Code.');
+			   $('#EvoucherValueDisplay').html('<input type="text" class="form-control" id="EvoucherValue" name="EvoucherValue" value="0" autocomplete="off" disabled>');
+			}
+			else if(result	== '2'){
+			   $('#EvoucherMsg').html('Invalid Evoucher Code.');
+			   			   $('#EvoucherValueDisplay').html('<input type="text" class="form-control" id="EvoucherValue" name="EvoucherValue" value="0" autocomplete="off" disabled>');
+
+			   }   
+			else{
+			   $('#EvoucherValueDisplay').html(result);
+			   $('#EvoucherMsg').html('');
+			   }  
+			      
+			  
+		
+		}
+	});
+
+}
+
+/*function getRateLetter(){		
+	
+	var reservation_date = $("#reservation_date").val();
+	var id_company = $("#id_company").val();
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxGetRateLetter.php',
+		   data: 'reservation_date='+reservation_date+'&id_company='+id_company, 
+		   success: function (result) {			  	    
+				$( "#rate_id" ).html(result);
+				//ajaxRoomRemoveAll();										
+			}
+
+		})
+}*/
+function changeEditData(){		
+	
+	var reservation_date = $("#reservation_date").val();
+	var id_company = $("#id_company").val();
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxGetRateLetter.php',
+		   data: 'reservation_date='+reservation_date+'&id_company='+id_company, 
+		   success: function (result) {			  	    
+				//$( "#rate_id" ).html(result);
+				//ajaxRoomRemoveAll();										
+			}
+		})
+}
+
+
+
+
+function changePaymentDate(startDate){
+	
+	var paymentDate = moment(startDate, "YYYY-MM-DD");
+	paymentDate.subtract(45, 'days');
+	
+	var d= moment();
+	$('#payment_date').datepicker('destroy');
+	if(paymentDate < d){
+	$('#payment_date').val(d.format('DD-MM-YYYY'));
+	
+	}else{
+	$('#payment_date').val(paymentDate.format('DD-MM-YYYY'));
+	}
+	$("#payment_date").datepicker({
+	dateFormat : 'dd-mm-yy',
+	minDate : new Date(),
+	maxDate : new Date(startDate),
+	});
+
+}
+
+
+$("#view").click(function (){
+	var reservation_date = $("#reservation_date").val();
+	var id_company = $("#id_company").val();
+	var rate_id = $("#rate_id").val();
+	var hotel_id = $("#hotel_id").val();
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxGetPlanDetails.php',
+		   data: 'reservation_date='+reservation_date+'&id_company='+id_company+'&rate_id='+rate_id+'&hotel_id='+hotel_id, 
+		   success: function (result) {					
+				$( "#ajaxPlanData" ).html(result);
+				$('#planDetail').popup({
+        			transition: 'all 0.3s',
+           			 autoopen: true,            
+        			});
+				//$("#hotelId").val('1').attr('selected','selected');					
+			}
+		})
+
+	
+})
+
+
+
+function ajaxAddRoom(rate_id,rate_assign_id,room_id,rate_plan_id,type){
+	var reservation_date = $("#reservation_date").val();
+	var rate_id = $("#rate_id").val();
+	var hotel_id = $("#hotel_id").val();
+	var OrderUniqueID = $("#OrderUniqueID").val();	
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxaddRoomEditPage.php',
+		   data: 'reservation_date='+reservation_date+'&hotel_id='+hotel_id+'&rate_id='+rate_id+'&rate_assign_id='+rate_assign_id+'&room_id='+room_id+'&rate_plan_id='+rate_plan_id+'&type='+type+'&OrderUniqueID='+OrderUniqueID, 
+		   success: function (result) {				
+		   	
+				resultArray = result.split('|||');
+								
+					$('#showRoom').append(resultArray['1']);
+					$('#pricingValue').html(resultArray['2']);
+					$('#addRoommsg').css('display', 'none');
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();				
+			}
+		})
+
+}
+
+function ajaxAddothercharges(rate_id,rate_assign_id,room_id,rate_plan_id,type){
+	var reservation_date = $("#reservation_date").val();
+	var rate_id = $("#rate_id").val();
+	var hotel_id = $("#hotel_id").val();
+	var OrderUniqueID = $("#OrderUniqueID").val();
+	var book_type = $("#book_type").val();
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxaddOtherChargesEditPage.php',
+		   data: 'reservation_date='+reservation_date+'&hotel_id='+hotel_id+'&rate_id='+rate_id+'&rate_assign_id='+rate_assign_id+'&room_id='+room_id+'&rate_plan_id='+rate_plan_id+'&type='+book_type+'&OrderUniqueID='+OrderUniqueID, 
+		   success: function (result) {					
+				resultArray = result.split('|||');					
+					$('#showOtherCharges').append(resultArray['1']);
+					$('#pricingValue').html(resultArray['2']);
+					$('#addRoommsg').css('display', 'none');
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();				
+			}
+		})
+
+}
+
+function ajaxRoomRemove(uniqueCode){	
+var OrderUniqueID = $("#OrderUniqueID").val();
+		$.ajax({
+			   type: "GET",
+			   url: 'ajax/ajaxUpdateSessionBookingEditPage.php',
+			   data: 'remove=removeOne'+'&uniqueCode='+uniqueCode+'&OrderUniqueID='+OrderUniqueID, 
+			   success: function (result) {	
+			   resultArray = result.split('|||');			
+				 $('#'+uniqueCode).remove();
+				 	if(resultArray['1']=='removeroomLimitMsg'){
+						$('#roomLimitMsg').css('display', 'none');	
+					}
+					if(resultArray['2']=='roomLimitMsgRoomType'){
+						$('#roomLimitMsgRoomType').css('display', 'none');	
+					}
+					
+					$('#pricingValue').html(resultArray['2']);
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();
+					
+					
+				}
+		});
+}
+
+function ajaxOtherChargesRemove(uniqueCode){
+	var OrderUniqueID = $("#OrderUniqueID").val();
+		$.ajax({
+			   type: "GET",
+			   url: 'ajax/ajaxUpdateSessionOtherChargesEditPage.php',
+			   data: 'remove=removeOne'+'&uniqueCode='+uniqueCode+'&OrderUniqueID='+OrderUniqueID, 
+ success: function (result) {	
+			   resultArray = result.split('|||');			
+				 $('#'+uniqueCode).remove();
+				 	if(resultArray['1']=='removeroomLimitMsg'){
+						$('#roomLimitMsg').css('display', 'none');	
+					}
+					if(resultArray['2']=='roomLimitMsgRoomType'){
+						$('#roomLimitMsgRoomType').css('display', 'none');	
+					}
+					$('#pricingValue').html(resultArray['0']);
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();
+					
+					
+				}
+		});
+}
+
+
+function ajaxRoomRemoveAll(){	
+	var rate_id = $("#rate_id").val();
+	var OrderUniqueID = $("#OrderUniqueID").val();
+	//
+ $.ajax({
+   type: "GET",
+   url: 'ajax/ajaxUpdateSessionBookingEditPage.php',
+   data: 'remove=removeAll'+'&rate_id='+rate_id+'&OrderUniqueID='+OrderUniqueID, 
+   success: function (result) {	
+   resultArray = result.split('###');
+   if(resultArray[1]!=0){	   			
+		$( ".ajaxAddRoom" ).remove();
+		$('#addRoommsg').show();
+		$('#subtotal').html('<i class="fa fa-inr"></i> 0');
+		$('#discount').html('<i class="fa fa-inr"></i> 0');
+		$('#addchargesvalue').html('<i class="fa fa-inr"></i> 0');
+		$('#tax').html('<i class="fa fa-inr"></i> 0');
+		$('#totalPrice').html('<i class="fa fa-inr"></i> 0');
+		$('#amountReceived').html('<i class="fa fa-inr"></i> 0');
+		$('#balance').html('<i class="fa fa-inr"></i> 0');
+		$('#flatDiscount').val(0);
+		$('#percentDiscount').val(0);
+		$('#flatAdditionalCharges').val(0);
+		$('#percentAdditionalCharges').val(0);
+   }else{
+	   //ajaxAdogaRoomRemoveAll();
+		resultArray2 = result.split('|||');
+		
+		//resultArrayKey = resultArray2.split('%^&');
+		$( ".ajaxAddRoom" ).remove();
+		$('#addRoommsg').show();
+		$('#subtotal').html('<i class="fa fa-inr"></i> 0');
+		$('#discount').html('<i class="fa fa-inr"></i> 0');
+		$('#addchargesvalue').html('<i class="fa fa-inr"></i> 0');
+		$('#tax').html('<i class="fa fa-inr"></i> 0');
+		$('#totalPrice').html('<i class="fa fa-inr"></i> 0');
+		$('#amountReceived').html('<i class="fa fa-inr"></i> 0');
+		$('#balance').html('<i class="fa fa-inr"></i> 0');
+		$('#flatDiscount').val(0);
+		$('#percentDiscount').val(0);
+		$('#flatAdditionalCharges').val(0);
+		$('#percentAdditionalCharges').val(0);
+		
+		var len = resultArray2.length;
+		for (var i = 1; i < len; i++) {
+			resultArrayKey = resultArray2[i].split('%^&');	
+			resultArrayKeyRateId = resultArrayKey['1'].split('###');   
+			$('#trafficprice_'+resultArrayKeyRateId['0']).html(resultArrayKey['0']);	
+		
+		}
+		
+		
+				
+				
+				
+	   }
+		
+	}
+	})
+	
+}
+function ajaxCheckAdogoRateletter(){	
+	var rate_id 		= $("#rate_id").val();
+	var OrderUniqueID 	= $("#OrderUniqueID").val();
+	var eId 			= $('#eId').val();
+	var book_type 		= $("#book_type").val();
+	
+ $.ajax({
+   type: "GET",
+   url: 'ajax/ajaxCheckAdogoRateletter.php',
+   data: 'remove=removeAll'+'&rate_id='+rate_id+'&OrderUniqueID='+OrderUniqueID+'&eId='+eId+'&book_type='+book_type, 
+   success: function (result) {	
+    	
+   resultArray = result.split('###');
+   if(resultArray[1]!=0){	  
+  		
+		$( ".ajaxAddRoom" ).remove();
+		$('#addRoommsg').show();
+		$('#subtotal').html('<i class="fa fa-inr"></i> 0');
+		$('#discount').html('<i class="fa fa-inr"></i> 0');
+		$('#addchargesvalue').html('<i class="fa fa-inr"></i> 0');
+		$('#tax').html('<i class="fa fa-inr"></i> 0');
+		$('#totalPrice').html('<i class="fa fa-inr"></i> 0');
+		$('#amountReceived').html('<i class="fa fa-inr"></i> 0');
+		$('#balance').html('<i class="fa fa-inr"></i> 0');
+		$('#flatDiscount').val(0);
+		$('#percentDiscount').val(0);
+		$('#flatAdditionalCharges').val(0);
+		$('#percentAdditionalCharges').val(0);
+   }else{   
+	   
+	   //ajaxAdogaRoomRemoveAll();
+		resultArray2 = resultArray[0].split('|||');
+		resultArray2 = resultArray2.filter(Boolean);	
+		var len = resultArray2.length;		
+		for (var i = 0; i < len; i++) {		
+			resultArray3 = resultArray2[i].split('&&&&');		
+			$('#trafficprice_'+resultArray3[0]).html(resultArray3[1]);	
+		}
+			
+			
+	   }
+		
+	}
+	})
+	
+}
+
+function ajaxAdogaRoomRemoveAll(rate_id,rate_assign_id,room_id,rate_plan_id,type){
+	
+	var reservation_date = $("#reservation_date").val();
+	var rate_id = $("#rate_id").val();
+	var hotel_id = $("#hotel_id").val();
+	
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxAdogoUpdateSessionBookingEditPage.php',
+		   data: 'reservation_date='+reservation_date+'&hotel_id='+hotel_id+'&rate_id='+rate_id+'&rate_assign_id='+rate_assign_id+'&room_id='+room_id+'&rate_plan_id='+rate_plan_id+'&type='+type, 
+		   success: function (result) {					
+				resultArray = result.split('|||');	
+				
+				$('#trafficprice_'+resultArray['2']).html(resultArray['1']);				
+					/*$('#showOtherCharges').append(resultArray['1']);
+					$('#pricingValue').html(resultArray['2']);
+					$('#addRoommsg').css('display', 'none');
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();*/				
+			}
+		})
+
+}
+
+
+
+
+
+
+$("#payment_date").datepicker({
+	dateFormat : 'dd-mm-yy',
+	minDate : new Date(),
+	maxDate: new Date('<?php echo date('Y-m-d',strtotime($row->checkin) ); ?>')
+});
+
+
+//////////////////////////////save price popup form common//////////////////////////////////////////////////////////
+
+
+function pricePopUp(id){
+	var Id = id.split('_');
+	var uniqueId= Id[1];
+	$('#uniqueCode').val(uniqueId);
+	
+}
+function savepricePopUpform(){
+	var uniqueCode = $("#uniqueCode").val();
+	var dataValue = $('#dataValue'+'\\|'+uniqueCode).val();		
+	var form=$("#pricePopUpform");
+	if(form.parsley().validate()){
+	$('.loading').show(); 
+	$.ajax({
+	   type: "POST",
+	   url: 'ajax/ajaxSavePriceEdit.php',
+	   data: form.serialize()+'&dataValue='+dataValue, 
+	   success: function (result) {
+	    $('#pricePopUp').popup('hide');
+		$("#pricePopUpform")[0].reset();
+		 alert('Price has been updated.');
+		resultArray = result.split('|||');	
+						$('#roomLimitMsg').css('display', 'block');
+						$('#roomLimitMsg').html(resultArray['0']);
+						$('#roomLimitMsgRoomType').css('display', 'block');
+						$('#roomLimitMsgRoomType').html(resultArray['1']);
+					
+					$('#price_'+uniqueCode).html(resultArray['2']);
+					$('#pricingValue').html(resultArray['3']);	
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();						
+		},
+	  complete: function(){
+		$('.loading').hide();
+	  }
+	});
+	return false;
+	}
+}
+
+
+
+
+function MultiPlanSelect(uniqueCode){
+	
+ var form1=$("#availabiltyForm");	
+ var form2=$("#addRoomForm");
+ var dataString = $("#availabiltyForm, #addRoomForm").serialize();	
+	
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxGetMultiPlanDetails.php',
+		   data: dataString+'&uniqueCode='+uniqueCode, 
+		   success: function (result) {					
+				$( "#ajaxPlanData" ).html(result);
+				$('#planDetail').popup({
+        			 transition: 'all 0.3s',
+           			 autoopen: true,            
+        		});
+				 //$("#hotelId").val('1').attr('selected','selected');					
+			}
+		})
+	
+}
+
+ 
+function getRateEdit(uniqueCode){	
+
+	var arrayCode = uniqueCode.split("|");
+	var uniqueId = arrayCode['1'];
+	
+	
+	var eId = $('#eId').val();
+	var room_quantity = $('#room_quantity\\|'+uniqueId).val();
+	var dataValue = $('#dataValue\\|'+uniqueId).val();
+	var adult_no = $('#adult_no\\|'+uniqueId).val();
+	var infant_no = $('#infant_no\\|'+uniqueId).val();
+	var child_no = $('#child_no\\|'+uniqueId).val();
+	var uniqueCode = $('#uniqueCode\\|'+uniqueId).val();
+	var room_type_id = $('#room_type_id\\|'+uniqueId).val();
+	var rate_plan_id = $('#rate_plan_id\\|'+uniqueId).val();
+	var reservation_date = $("#reservation_date").val();
+	var meal = $('#meal\\|'+uniqueId).val();
+	var tarrif = $('#tarrif\\|'+uniqueId).val();
+	var inclusive_tax = $('#inclusive_tax\\|'+uniqueId).val();
+	var OrderUniqueID = $("#OrderUniqueID").val();
+
+
+	  	
+	 $.ajax({
+			   type: "GET",
+			   url: 'ajax/ajaxupdateRoomDetailsEditPage.php',
+			   data: 'dataValue='+dataValue+'&room_quantity='+room_quantity+'&adult_no='+adult_no+'&child_no='+child_no+'&infant_no='+infant_no+'&uniqueCode='+uniqueCode+'&reservation_date='+reservation_date+'&rate_plan_id='+rate_plan_id+'&room_type_id='+room_type_id+'&tarrif='+tarrif+'&meal='+meal+'&inclusive_tax='+inclusive_tax+'&eId='+eId+'&OrderUniqueID='+OrderUniqueID, 
+			   success: function (result) {
+			   	resultArray = result.split('|||');						
+						$('#roomLimitMsg').css('display', 'block');
+						$('#roomLimitMsg').html(resultArray['0']);
+						$('#roomLimitMsgRoomType').css('display', 'block');
+
+						
+						if(resultArray['1']  === undefined || resultArray['1'] == 0){
+							//$('#trafficprice_'+uniqueId).html(resultArray['1']);
+					$('#TaxPerdayPerroom_'+uniqueId).html(resultArray['2']);					
+					$('#price_'+uniqueId).html(resultArray['3']);					
+					$('#pricingValue').html(resultArray['4']);	
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();
+							
+						}else{
+							
+						$('#trafficprice_'+uniqueId).html(resultArray['1']);
+					$('#TaxPerdayPerroom_'+uniqueId).html(resultArray['2']);					
+					$('#price_'+uniqueId).html(resultArray['3']);					
+					$('#pricingValue').html(resultArray['4']);	
+					$('#flatDiscount').val();
+					$('#percentDiscount').val();
+					$('#flatAdditionalCharges').val();
+					$('#percentAdditionalCharges').val();	
+							
+							}
+										
+				   }
+				})	
+	
+				
+}
+
+ function RemoveRateLetter(){		
+	var hotel_id = $("#hotel_id").val();
+	var reservation_date = $("#reservation_date").val();
+	var id_company = $("#id_company").val();
+		$.ajax({
+		   type: "POST",
+		   url: 'ajax/ajaxRemoveRateLetter.php',
+		   data: 'reservation_date='+reservation_date+'&id_company='+id_company+'&hotel_id='+hotel_id, 
+		   success: function (result) {			  	    
+				$( "#rate_id" ).html(result);
+				//ajaxRoomRemoveAll();										
+			}
+		})
+}
+
+
+
+ </script>

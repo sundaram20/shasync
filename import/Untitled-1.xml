@@ -1,0 +1,306 @@
+<?php include_once("../config/fron_autoload.php"); 
+
+		
+$csv_file = "hotelbooking.csv";
+
+				$fieldseparator = ",";
+				$lineseparator = "\n";
+				
+				
+				$file = fopen($csv_file, "r");
+//$sql_data = "SELECT * FROM prod_list_1 ";
+
+$count = 0;                                         // add this line
+
+				if(!file_exists($csv_file)) {
+					echo "File not found. Make sure you specified the correct path.\n";
+					exit;
+				}
+				
+				$file = fopen($csv_file,"r");
+				
+				if(!$file) {
+					echo "Error opening data file.\n";
+					exit;
+				}
+				
+				$size = filesize($csv_file);
+				
+				if(!$size) {
+					echo "File is empty.\n";
+					exit;
+				}
+
+		while (($emapData = fgetcsv($file, 10000, ",")) !== FALSE)
+{
+    //print_r($emapData);
+    //exit();
+    $count++;                                      // add this line
+
+    if($count>1){   
+	
+	
+	$hotelname=$emapData[0]; $bookingnumber=$emapData[1]; $bookingdate=$emapData[2]; $checkin=$emapData[3];  $checkout=$emapData[4];  $agentname=$emapData[5];  $gustname=$emapData[6];  $countryname=$emapData[7];  $paymentmode=$emapData[8];  $planning=$emapData[9];  $status=$emapData[10];  $specialins=$emapData[11];  $single=$emapData[12]; $double=$emapData[13]; $triple=$emapData[14]; $FGCP=$emapData[15]; $ARRIVING_FROM=$emapData[16]; $DEPARTING_TO=$emapData[17];  $TRAVEL_MODE=$emapData[18];  $RATE_TYPE=$emapData[19]; $USER_Name=$emapData[20]; $NEXT_ID=$emapData[21]; $PICKYN=$emapData[22];  $BOOKING_THROUGH=$emapData[23];  $STATUS_FLAG=$emapData[24]; $NO_NIGHT=$emapData[25]; $NO_NIGHT=$emapData[26]; $DEAR1=$emapData[27]; $BS=$emapData[28];
+ $RoomDetails=$emapData[29]; $RoomDetails=$emapData[30];
+ 
+ 
+$hotelname_get =$emapData[0];
+$hotelname_get2 = explode(",",$hotelname_get);
+$hotelname = $hotelname_get2[0];
+
+$hotel_code_get = $emapData[1];
+$hotel_code_get2 = explode("/",$hotel_code_get);
+$hotel_code = $hotel_code_get2[0];
+
+$bookingnumber = $emapData[1];
+ 
+ 	
+	
+	$query11 = "SELECT area.area FROM fs_company WHERE name ='".$comapnyname."' and id_shop='".$id_shop."'" ;
+	
+	/*$result1 = mysql_query($query1,$link) or die('Errant query:  '.$query1);
+	$query1count = mysql_num_rows($result1);
+	
+*/
+	$result11 = executeSql($query11,$link);
+	$query11count = mysql_num_rows($result11);		
+	
+	$query11data = mysql_fetch_array($result11);
+			$area_id= trim(stripslashes($query11data['area']));
+			$id_company= trim(stripslashes($query11data['id_company']));
+			
+			
+	
+	$query12 = "SELECT  fs_areas_assign.user_id FROM  fs_areas_assign WHERE id ='".$area_id."' and id_shop='".$id_shop."'" ;	
+	
+	$result12 = executeSql($query12,$link);
+	$query12count = mysql_num_rows($result12);	
+	
+	$query12data = mysql_fetch_array($result12);
+			$executive_id= trim(stripslashes($query12data['user_id']));
+			
+			
+	
+	
+	$query13= "SELECT  fs_hotels.id as hotel_id FROM  fs_hotels WHERE name ='".$hotel_name."' and id_shop='".$id_shop."'" ;	
+	$result13 = executeSql($query13,$link);
+	$query13count = mysql_num_rows($result13);	
+	
+	$query13data = mysql_fetch_array($result13);
+			$hotel_id= trim(stripslashes($query13data['hotel_id']));
+			
+			
+	 
+	
+	 $query14	=	"SELECT * FROM  fs_rate WHERE (`company_id` = '".$company_id."' || company_id=0) and ((start_date <=  '".date('Y-m-d',strtotime($TimeSpan_Start))."' and end_date >= '".date('Y-m-d',strtotime($TimeSpan_Start))."') OR ( start_date between '".date('Y-m-d',strtotime($TimeSpan_Start))."' and '".date('Y-m-d',strtotime($TimeSpan_Start))."') OR ( end_date between '".date('Y-m-d',strtotime($TimeSpan_Start))."' and '".date('Y-m-d',strtotime($TimeSpan_Start))."')) and id_shop='".$id_shop."'";
+	
+	
+	
+	die;
+	$query7 = mysql_query("Insert into fs_customer set first_name = '".$Customer_GivenName."' , last_name='".$Customer_Surname."',id_shop='".$id_shop."',status='1'");
+		$id_customer = mysql_insert_id();	
+			
+			
+			
+	
+	
+	
+	
+	
+	
+ 	$query1 = "SELECT * FROM fs_hotels WHERE name ='".$hotelname."' and hotel_code='".$hotel_code."'" ;
+	
+	/*$result1 = mysql_query($query1,$link) or die('Errant query:  '.$query1);
+	$query1count = mysql_num_rows($result1);
+	
+*/
+	$result1 = executeSql($query1,$link);
+	$query1count = mysql_num_rows($result1);
+		
+	
+	$query1data = mysql_fetch_array($result1);
+			$id_shop = trim(stripslashes($query1data['id_shop']));
+			$id_shop_group =1; 
+			$hotel_code = trim(stripslashes($query1data['hotel_code']));
+			$id=trim(stripslashes($query1data['id']));
+		
+		
+		$id_lang=1;
+		$id_hotel = $HotelReservations_ID;
+		$id_rate = 0;
+		//$id_company = 20;
+		$id_company_person = 29;
+		$id_cart = 0;
+		$id_currency = 1;
+		$payment_status = 2;
+		
+		if($ResStatus=="Commit") { 
+		$ResStatusNew = "Confirmed";
+		}else if($ResStatus=="Cancel") {
+		$ResStatusNew = "Cancelled";	
+		}else {
+		$ResStatusNew = "Waitlisted";
+		}
+		
+		$query2 = "SELECT * FROM fs_htl_booking_status WHERE name='".$status."'";
+		/*$result2 = mysql_query($query2,$link) or die('Errant query:  '.$query2);
+		$query2count = mysql_num_rows($result2);
+		*/
+		
+		$result2 = executeSql($query2,$link);
+	    $query2count = mysql_num_rows($result2);
+		
+	
+		if($query2count>0) {
+	$query2data = mysql_fetch_array($result2);
+			$booking_status = trim(stripslashes($query2data['id']));
+		
+		}else{
+		$booking_status="0";	
+		}
+ 
+	
+	
+		$tarrif_price = 0;
+		$food_price = 0;
+		$extra_price = 0;
+			$subtotal = 0;
+		$total_tax = 0;
+		$total_price = 0;
+		$amount_received = 0;
+		
+		//$subtotal = $Total_AmountBeforeTax;
+		//$total_tax = $Total_TotalBookingAmount - $Total_AmountBeforeTax;
+		//$total_price = $Total_TotalBookingAmount;
+		//$amount_received = $Total_TotalBookingAmount;
+		$balance = 0;
+		
+		
+		$total_products =0; 
+		
+		
+				if($RoomType_AgeQualifyingCode=="10"){
+		$total_adults =	$RoomType_AgeQualifyingCount;
+		}else {
+		$total_adults = 0;	
+		}
+		
+		
+		if($RoomType_AgeQualifyingCode=="8"){
+		$total_child =	$RoomType_AgeQualifyingCount;
+		}else {
+		$total_child = 0;	
+		}
+		
+		
+		
+		$conversion_rate = "1.00";
+		$discount_type = 0;
+		$discount_var = 0;
+		$total_discounts = 0;
+		
+		$invoice_number = 0;
+		$invoice_date = date("Y-m-d",strtotime($bookingdate));
+		$payment_date = $bookingdate;
+		$checkin = $checkin;
+		$checkout = $checkout;
+		
+		$now = $checkin; // or your date as well
+		$your_date = strtotime($checkout);
+		$datediff = $now - $your_date;
+		
+		$no_of_days =  round($datediff / (60 * 60 * 24));
+		
+		$valid = 1;
+		$segment_id = 1; 
+		$series_id = 0;
+		$operator_id = 0;
+		$type = "N";
+		$reminder = 0;
+		
+		$date_created = date("Y-m-d H:i:s");
+		$last_modified = date("Y-m-d H:i:s");
+		$last_modified_by = 9;
+		
+		//get last id of orders table//
+		
+		$query4 = "SELECT * FROM fs_orders order by id_order desc limit 1";
+		
+		/*$result4 = mysql_query($query4,$link) or die('Errant query:  '.$query4);
+		$query4count = mysql_num_rows($result4);*/
+		
+		$result4 = executeSql($query4,$link);
+		$query4count = mysql_num_rows($result4);
+		
+		
+		if($query4count>0) {
+		$query4data = mysql_fetch_array($result4);
+			$fs_orders_id = trim(stripslashes($query4data['id_order']));
+			$fs_orders_idnew = $fs_orders_id+1;
+		
+		}else{
+		$fs_orders_idnew = 0;	
+		}
+		
+		$invID = str_pad($fs_orders_idnew, 3, '1', STR_PAD_LEFT);
+		$reference = $hotel_code."/".$invID;
+		$code = 0;
+		
+		
+		
+		
+		//get customer id from name//
+		
+		
+		
+		$query6 = "SELECT * FROM fs_customer WHERE first_name='".$gustname."'";
+		
+		$result6 = executeSql($query6,$link);
+		$query6count = mysql_num_rows($result6);
+		
+		/*$result6 = mysql_query($query6,$link) or die('Errant query:  '.$query6);
+		$query6count = mysql_num_rows($result6);
+		
+*/		if($query6count>0) {
+	$query6data = mysql_fetch_array($result6);
+			$id_customer = trim(stripslashes($query6data['id_customer']));
+		
+		}else {
+		$id_customer = 0;	
+		}
+					
+					$Insert_into_Order_Table = "Insert into fs_orders(reference,code,id_shop_group,id_shop,id_lang,id_hotel,id_rate,id_customer,id_company,id_company_person,id_cart,id_currency,payment_status,booking_status,conversion_rate,tarrif_price,food_price,extra_price,discount_type,discount_var,total_discounts,subtotal,total_tax,total_price,amount_received,balance,total_products,total_adults,total_child,invoice_number,invoice_date,payment_date,checkin,checkout,no_of_days,valid,segment_id,series_id,operator_id,type,reminder,date_created,last_modified,last_modified_by)Values('$reference','$code','$id_shop_group','$id_shop','$id_lang','$id_hotel','$id_rate','$id_customer','$id_company','$id_company_person','$id_cart','$id_currency','$payment_status','$booking_status','$conversion_rate','$tarrif_price','$food_price','$extra_price','$discount_type','$discount_var','$total_discounts','$subtotal','$total_tax','$total_price','$amount_received','$balance','$total_products','$total_adults','$total_child','$invoice_number','$invoice_date','$payment_date','$checkin','$checkout','$no_of_days','$valid','$segment_id','$series_id','$operator_id','$type','$reminder','$date_created','$last_modified','$last_modified_by')";
+					
+					
+		//$Insert_into_Order_Table_Run = mysql_query($Insert_into_Order_Table,$link) or die('Errant query:  '.$Insert_into_Order_Table);
+		
+		$Insert_into_Order_Table_Run = executeSql($Insert_into_Order_Table);
+		
+		$in_last_id = mysql_insert_id();
+		
+		$room_id=$RoomType_RoomTypeCode;
+		$rate_id=0;
+		$rate_plan_id=0;
+		$rate_assign_id =0;
+		$dated = $HotelReservations_CreateDateTime;
+		$type=0;
+		$room_quantity = $RoomType_NumberOfUnits;
+		$adults = $total_adults;
+		$child = $total_child;
+		
+		$unique_code = "CODE";
+		
+		
+		$Insert_into_Order_Details = "Insert into fs_order_detail(id_order,id_shop,hotel_id,room_id,rate_id,rate_plan_id,rate_assign_id,dated,type,room_quantity,adults,child,tarrif_price,food_price,extra_price,total_price,original_product_price,unique_code)Values('$in_last_id','$id_shop','$HotelReservations_ID','$room_id','$rate_id','$rate_plan_id','$rate_assign_id','$dated','$type','$room_quantity','$adults','$child','$tarrif_price','$food_price','$extra_price','$total_price','$Base_AmountBeforeTax','$unique_code')";
+		//$Insert_into_Order_Details_Run = mysql_query($Insert_into_Order_Details,$link) or die('Errant query:  '.$Insert_into_Order_Details);
+		$Insert_into_Order_Details_Run = executeSql($Insert_into_Order_Details);
+     
+    }                                             
+}
+
+
+
+
+
+
+?>

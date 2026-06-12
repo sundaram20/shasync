@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteBase /adminpanel
+
+
+
+ErrorDocument 404 /roomstatushub/adminpanel/404.php

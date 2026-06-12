@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelResNotifRQ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.opentravel.org/OTA/2003/05" EchoToken="5895e544-f496-4ee5-b9f9-99bc54990390" TimeStamp="2018-05-12 22:58:05" Version="1.0" ResStatus="Commit">
+  <POS>
+    <Source>
+      <RequestorID ID="Resavenue Channel Manager"/>
+      <BookingChannel Type="MakeMyTrip">
+        <CompanyName>MakeMyTrip</CompanyName>
+      </BookingChannel>
+    </Source>
+  </POS>
+  <HotelReservations>
+    <HotelReservation CreateDateTime="2018-04-19 13:43:36.0">
+      <UniqueID ID="0032968187111" Type="14" ID_Context="Channel Manager ID"/>
+      <RoomStays>
+        <RoomStay>
+          <BasicPropertyInfo HotelCode="44131" HotelName="Hotel Hilltop Palace" />
+          <RatePlans>
+            <RatePlan RatePlanCode="3035456" RatePlanName="Deluxe Lake Facing Room - CP Plan"/>
+          </RatePlans>
+          <RoomTypes>
+            <RoomType NumberOfUnits="1" RoomTypeCode="1377">
+              <RoomDescription Name="Deluxe Lake Facing Room"/>
+            </RoomType>
+          </RoomTypes>
+          <GuestCounts>
+            <GuestCount AgeQualifyingCode="10" Count="2"/>
+          </GuestCounts>
+          <ResGuestRPHs>
+            <ResGuestRPH RPH="0" />
+          </ResGuestRPHs>
+          <TimeSpan Start="2018-04-19" End="2018-04-20" />
+          <RoomRates>
+            <RoomRate>
+              <Rates>
+                <Rate EffectiveDate="2018-04-19">
+                  <Base AmountBeforeTax="3894.0" CurrencyCode="INR"/>
+                </Rate>
+              </Rates>
+            </RoomRate>
+          </RoomRates>
+          <Total AmountBeforeTax="2725.8" CurrencyCode="INR"/>
+        </RoomStay>
+      </RoomStays>
+      <ResGuests>
+        <ResGuest ResGuestRPH="0">
+          <Profiles>
+            <ProfileInfo>
+              <UniqueID Type="1" ID_Context="Guest Profile ID" />
+              <Profile ProfileType="1">
+                <Customer>
+                  <PersonName>
+                    <GivenName>Bharti</GivenName>
+                    <Surname>Choudhary</Surname>
+                  </PersonName>
+                  <Email></Email>
+                </Customer>
+              </Profile>
+            </ProfileInfo>
+          </Profiles>
+        </ResGuest>
+      </ResGuests>
+      <ResGlobalInfo>
+        <Total AmountBeforeTax="2725.8" AmountIncludingMarkup="3894.0" TotalBookingAmount="3894.0" CurrencyCode="INR" >
+          <Taxes>
+            <Tax Amount="594.0" CurrencyCode="INR"/>
+          </Taxes>
+          <Commission AmountAfterTax="1168.2" TaxInclusive="YES"/>
+        </Total>
+      </ResGlobalInfo>
+      <PayAtHotel>N</PayAtHotel>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResNotifRQ>

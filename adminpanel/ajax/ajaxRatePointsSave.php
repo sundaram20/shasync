@@ -1,0 +1,11 @@
+<?php include_once("../../config/auto_loader.php");
+//checkUserLevelPermission($_SESSION['userLevel'],TBL_HOTELS,'view');
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+$ratePointId=$_REQUEST['ratePointId'];
+$ratepoints = $_REQUEST['ratepoints'];
+
+echo json_encode($_REQUEST);
+
+
+
+?>

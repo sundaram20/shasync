@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OTA_HotelResNotifRQ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.opentravel.org/OTA/2003/05" EchoToken="abbecfb9-e5c1-4941-8e8c-e0a9af2c6fbb" TimeStamp="2018-09-22 11:35:21" Version="1.0" ResStatus="Commit">
+  <POS>
+    <Source>
+      <RequestorID ID="Resavenue Channel Manager"/>
+      <BookingChannel Type="MakeMyTrip">
+        <CompanyName>MakeMyTrip</CompanyName>
+        <BookingSource>MakeMyTrip</BookingSource>
+      </BookingChannel>
+    </Source>
+  </POS>
+  <HotelReservations>
+    <HotelReservation CreateDateTime="2018-09-22 11:34:20.0">
+      <UniqueID ID="NH7003691524648888" Type="14" ID_Context="Channel Manager ID"/>
+      <RoomStays>
+        <RoomStay>
+          <BasicPropertyInfo HotelCode="544" HotelName="WelcomHeritage Umed Bhawan Palace" />
+          <RatePlans>
+            <RatePlan RatePlanCode="3761" RatePlanName="Royal Suite - CP Plan"/>
+          </RatePlans>
+          <RoomTypes>
+            <RoomType NumberOfUnits="1" RoomTypeCode="1705">
+              <RoomDescription Name="Royal Suite"/>
+            </RoomType>
+          </RoomTypes>
+          <GuestCounts>
+            <GuestCount AgeQualifyingCode="10" Count="1"/>
+          </GuestCounts>
+          <ResGuestRPHs>
+            <ResGuestRPH RPH="0" />
+          </ResGuestRPHs>
+          <TimeSpan Start="2018-09-24" End="2018-09-27" />
+          <RoomRates>
+            <RoomRate>
+              <Rates>
+                <Rate EffectiveDate="2018-09-24">
+                  <Base AmountBeforeTax="4720.0" CurrencyCode="INR"/>
+                </Rate>
+                <Rate EffectiveDate="2018-09-25">
+                  <Base AmountBeforeTax="4720.0" CurrencyCode="INR"/>
+                </Rate>
+                <Rate EffectiveDate="2018-09-26">
+                  <Base AmountBeforeTax="4720.0" CurrencyCode="INR"/>
+                </Rate>
+              </Rates>
+            </RoomRate>
+          </RoomRates>
+          <Total AmountBeforeTax="11328.0" CurrencyCode="INR"/>
+        </RoomStay>
+      </RoomStays>
+      <ResGuests>
+        <ResGuest ResGuestRPH="0">
+          <Profiles>
+            <ProfileInfo>
+              <UniqueID Type="1" ID_Context="Guest Profile ID" />
+              <Profile ProfileType="1">
+                <Customer>
+                  <PersonName>
+                    <GivenName>ANAND</GivenName>
+                    <Surname>SINGH</Surname>
+                  </PersonName>
+                  <Email></Email>
+                </Customer>
+              </Profile>
+            </ProfileInfo>
+          </Profiles>
+        </ResGuest>
+      </ResGuests>
+      <ResGlobalInfo>
+        <Total AmountBeforeTax="11328.0" AmountIncludingMarkup="14160.0" TotalBookingAmount="14160.0" CurrencyCode="INR" >
+          <Taxes>
+            <Tax Amount="2160.0" CurrencyCode="INR"/>
+          </Taxes>
+          <Commission AmountAfterTax="2832.0" TaxInclusive="YES"/>
+          <SupplierAmount>9168.0</SupplierAmount>
+          <PayStatus>Fully Paid</PayStatus>
+        </Total>
+      </ResGlobalInfo>
+      <PayAtHotel>N</PayAtHotel>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResNotifRQ>
