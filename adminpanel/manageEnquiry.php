@@ -371,6 +371,8 @@ if($_REQUEST['Download']=='Download'){
 
 			->setCellValue($head_cntr_column++.$head_hotel_row, 'Generation Date')
 
+            ->setCellValue($head_cntr_column++.$head_hotel_row, 'Time')
+
 			->setCellValue($head_cntr_column++.$head_hotel_row, 'Source')
 
 			->setCellValue($head_cntr_column++.$head_hotel_row, 'Last Updated on')
@@ -439,9 +441,9 @@ if($_REQUEST['Download']=='Download'){
 
   
 
-cellColor('A6:T6','254061');
+cellColor('A6:U6','254061');
 
-cellColor('A7:T7','75923c');
+cellColor('A7:U7','75923c');
 
 	$objPHPExcel->getActiveSheet()->getStyle('A6')->applyFromArray($styleArray);
 
@@ -583,27 +585,33 @@ cellColor('A7:T7','75923c');
 
 	$objPHPExcel->getActiveSheet(1)->getColumnDimension('B')->setWidth(14);	
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('C')->setWidth(20);	
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('C')->setWidth(10);	
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('D')->setWidth(15);
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('D')->setWidth(20);
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('E')->setWidth(22);	
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('E')->setWidth(15);	
 
 	$objPHPExcel->getActiveSheet(1)->getColumnDimension('F')->setWidth(22);	
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('G')->setWidth(25);
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('G')->setWidth(22);
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('H')->setWidth(30);	
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('H')->setWidth(25);	
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('I')->setWidth(28);
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('I')->setWidth(30);
 
 	$objPHPExcel->getActiveSheet(1)->getColumnDimension('J')->setWidth(28);	
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('K')->setWidth(18);
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('K')->setWidth(28);
 	$objPHPExcel->getActiveSheet(1)->getColumnDimension('L')->setWidth(18);	
 	$objPHPExcel->getActiveSheet(1)->getColumnDimension('M')->setWidth(18);	
 
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('N')->setWidth(7);	
-	$objPHPExcel->getActiveSheet(1)->getColumnDimension('O')->setWidth(7);
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('N')->setWidth(18);	
+	$objPHPExcel->getActiveSheet(1)->getColumnDimension('O')->setWidth(18);
+    $objPHPExcel->getActiveSheet(1)->getColumnDimension('P')->setWidth(18);
+    $objPHPExcel->getActiveSheet(1)->getColumnDimension('Q')->setWidth(18);
+    $objPHPExcel->getActiveSheet(1)->getColumnDimension('R')->setWidth(18);
+    $objPHPExcel->getActiveSheet(1)->getColumnDimension('S')->setWidth(18);
+    $objPHPExcel->getActiveSheet(1)->getColumnDimension('T')->setWidth(18);
+    $objPHPExcel->getActiveSheet(1)->getColumnDimension('U')->setWidth(18);
 
 	
 
@@ -793,14 +801,14 @@ $resContact = selectSql(TBL_CUSTOMER,"where type='2' and id_customer='".addslash
 
  $objPHPExcel->getActiveSheet()->getStyle('A')->getFont()->setBold(false);
 
-$objPHPExcel->getActiveSheet()->getStyle('A'.$connew.':R'.$connew)->applyFromArray($styleThinBlackBorderOutline);
+$objPHPExcel->getActiveSheet()->getStyle('A'.$connew.':U'.$connew)->applyFromArray($styleThinBlackBorderOutline);
 
 $objPHPExcel->setActiveSheetIndex(0)
 
 ->setCellValue($head_order_data++ . $connew, $Serialno++)
 
-//->setCellValue($head_order_data++ . $connew, date('d M Y',strtotime($row->dated)))
-	->setCellValue($head_order_data++ . $connew, date('d M Y H:i', strtotime($row->dated)))
+->setCellValue($head_order_data++ . $connew, date('d M Y',strtotime($row->dated)))
+->setCellValue($head_order_data++ . $connew, date('h:i A', strtotime($row->dated)))
 
 ->setCellValue($head_order_data++ . $connew, selectColumn(TBL_USERS,'name'," WHERE `id` = '".$row->created_by."'"))
 

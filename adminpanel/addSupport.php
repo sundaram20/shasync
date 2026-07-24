@@ -97,7 +97,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
                     <div class="form-group">
                       <label for="company_name">Company Name - City</label>
                       <div  class="input-group enquirypage" id="showcompanyby"> 
-                      <select  class="form-control select2 itemName"   name="id_company" id="id_company" onChange="getExecutiveName(this.value,''); " data-parsley-errors-container="#idcompanyError"  data-parsley-required>   
+                      <select  class="form-control select2 itemName"   name="id_company" id="id_company" onChange="getExecutiveName(this.value,''); " data-parsley-errors-container="#idcompanyError"  data-parsley-required required>   
                       <?php
                         
                           
@@ -552,6 +552,88 @@ comCheck = () =>{
         }//ajax end
 		
       });
+
+
+
+let supportHistoryXhr = null;
+let serialDebounce = null;
+let isApplyingHistory = false; // guard against infinite loop
+
+function fetchContactsThenSelect(companyId, contactIdToSelect, contactName) {
+    $.ajax({
+        type: "GET",
+        url: 'ajax/ajaxExecutiveName.php',
+        data: 'companyId=' + companyId + '&contactId=',
+        success: function (result) {
+            $('#id_contacts').empty();
+            $('#id_contacts').html(result);
+
+            if (contactIdToSelect) {
+                if ($('#id_contacts').find("option[value='" + contactIdToSelect + "']").length === 0) {
+                    $('#id_contacts').append(new Option(contactName, contactIdToSelect, true, true));
+                }
+                $('#id_contacts').val(contactIdToSelect).trigger('change');
+                ContactEditEnable();
+            }
+
+            isApplyingHistory = false;
+        }
+    });
+}
+
+function applySupportHistory(data) {
+    if (!data || !data.found) return;
+
+    isApplyingHistory = true;
+
+    if (data.serial) {
+        $('#serial').val(data.serial);
+    }
+
+    if (data.id_product) {
+        $('select[name="product_id"]').val(data.id_product).trigger('change');
+    }
+
+    if (data.id_company) {
+        if ($('#id_company').find("option[value='" + data.id_company + "']").length === 0) {
+            $('#id_company').append(new Option(data.company_name, data.id_company, true, true));
+        }
+        $('#id_company').val(data.id_company).trigger('change');
+        fetchContactsThenSelect(data.id_company, data.id_contacts, data.contact_name);
+    } else {
+        isApplyingHistory = false;
+    }
+}
+
+function checkSupportHistory(type, value) {
+    if (!value) return;
+    if (supportHistoryXhr) supportHistoryXhr.abort();
+    supportHistoryXhr = $.ajax({
+        url: 'ajax/ajaxCheckSupportHistory.php',
+        type: 'GET',
+        dataType: 'json',
+        data: { type: type, value: value },
+        success: applySupportHistory
+    });
+}
+
+// Serial field
+$(document).on('input', '#serial', function () {
+    if (isApplyingHistory) return;
+    clearTimeout(serialDebounce);
+    const val = $(this).val().trim();
+    serialDebounce = setTimeout(function () {
+        if (val.length >= 3) checkSupportHistory('serial', val);
+    }, 500);
+});
+
+// Company field — only respond to REAL user changes, not our own programmatic ones
+$(document).on('change', '#id_company', function () {
+    if (isApplyingHistory) return; // ignore changes we triggered ourselves
+    const val = $(this).val();
+    if (val) checkSupportHistory('company', val);
+});
+
 		
 </script>
 

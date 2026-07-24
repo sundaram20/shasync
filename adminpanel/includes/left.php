@@ -18,6 +18,7 @@
 		   <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/salesDashboard07.php" rel="salesDashboardReport02.php"> <i class="fa fa-circle-o"></i> <span>Dashboard 1.0 (Beta)</span> </a> </li> 
 		    <!-- <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/salesLeadAward.php" rel="salesLeadAwardSummary.php"> <i class="fa fa-circle-o"></i> <span>Sales Lead Award</span> </a> </li>-->
 		   <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/salesLeadAwardSummary.php" rel="salesLeadAwardSummary.php"> <i class="fa fa-circle-o"></i> <span>Sales Lead Summary</span> </a> </li>
+		    <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/support_report.php" rel="support_report.php"> <i class="fa fa-circle-o"></i> <span>Support  Dashboard</span> </a> </li>
       <!-- <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/salesDashboard.php"> <i class="fa fa-circle-o"></i> <span>Dashboard Test</span> </a> </li>
       <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/dashboard1/salesDashboardReport.php" rel="salesDashboardReport.php"> <i class="fa fa-circle-o"></i> <span>Dashboard 1.0 (Beta) test</span> </a> </li> 
           
