@@ -1,4 +1,4 @@
 <?php 
 
-header('Location: http://localhost:8074/sync/adminpanel/index.php'); 
+header('Location: https://www.roomstatushub.in/sync/adminpanel/index.php'); 
 ?>

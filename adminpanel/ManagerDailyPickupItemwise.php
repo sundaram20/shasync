@@ -239,7 +239,17 @@ if($_REQUEST['id_customer'] != ''){
 }
 
 if($_REQUEST['id_products'] != ''){
-	$sql .= " AND dpd.`id_product` = '".addslashes($_REQUEST['id_products'])."'";
+	if(strpos($_REQUEST['id_products'], 'cat_') === 0){
+		// Category selected — filter by all products under that category
+		$catId = addslashes(str_replace('cat_', '', $_REQUEST['id_products']));
+		$sql .= " AND dpd.`id_product` IN (
+					SELECT `id` FROM `".TBL_HOTELS."` 
+					WHERE `hotel_category` = '".$catId."'
+					AND `id_shop` = '".addslashes($_SESSION['shop'])."'
+				  )";
+	} else {
+		$sql .= " AND dpd.`id_product` = '".addslashes($_REQUEST['id_products'])."'";
+	}
 }
 	
 
@@ -1023,26 +1033,77 @@ table tbody tr.row-selected {
             </div>
 			  
 			  <div class="col-md-4">
-              <div class="form-group">
-                <label>Products</label>
-                <?php 
-				 $productDropDown = '<select class="form-control select2" name="id_products">
-											    <option value="" >Select Product</option>';
-											  $resCatt = selectSql(TBL_HOTELS," where id_shop='".addslashes($_SESSION['shop'])."' AND status=1 ");
-											  if($db->num_rows2($resCatt)){
-											  	while($resultCatt = $db->fetch_object2($resCatt)){
-													if($_REQUEST['id_product'] == $resultCatt->id){
-														$selected = 'selected="selected"';
-													}else{
-														$selected = '';
-													}
-													$productDropDown .= '<option '.$selected.' value="'.$resultCatt->id.'">'.ucfirst($resultCatt->name).'</option>';
-												}
-										  }
-											 	echo $productDropDown .= '</select>';
-											  ?>
-              </div>
-            </div>
+  <div class="form-group">
+    <label>Products</label>
+    <?php 
+    // 1. Fetch categories, dedupe by id (array key naturally prevents duplicates)
+    $categories = [];
+    $resCategories = selectSql('fs_hotel_type', " WHERE id_shop='".addslashes($_SESSION['shop'])."' AND status=1 ", ' ORDER BY `name`');
+    if($db->num_rows2($resCategories)){
+        while($catRow = $db->fetch_object2($resCategories)){
+            $categories[$catRow->id] = $catRow;
+        }
+    }
+
+    // 2. Fetch ALL products once (single query), dedupe by id, and bucket by category
+    $productsByCategory = [];
+    $uncategorized = [];
+    $seenProductIds = [];
+
+    $prodSql = "SELECT * FROM `".TBL_HOTELS."` 
+                WHERE id_shop='".addslashes($_SESSION['shop'])."' 
+                AND status=1 
+                ORDER BY `name`";
+    $resAllProducts = mysqli_query($connNew, $prodSql);
+
+    while($prodRow = mysqli_fetch_object($resAllProducts)){
+        if(isset($seenProductIds[$prodRow->id])){
+            continue; // safeguard against any duplicate rows in the result set
+        }
+        $seenProductIds[$prodRow->id] = true;
+
+        if(!empty($prodRow->hotel_category) && $prodRow->hotel_category != '0'){
+            $productsByCategory[$prodRow->hotel_category][] = $prodRow;
+        } else {
+            $uncategorized[] = $prodRow;
+        }
+    }
+
+    // 3. Build the dropdown from the deduped, bucketed data
+    $productDropDown = '<select class="form-control select2" name="id_products">
+                            <option value="">Select Product</option>';
+
+    foreach($categories as $catId => $catRow){
+        if(empty($productsByCategory[$catId])){
+            continue; // skip categories with no products
+        }
+
+        $productDropDown .= '<optgroup label="'.ucfirst($catRow->name).'">';
+
+        $catSelected = ($_REQUEST['id_products'] == 'cat_'.$catId) ? 'selected="selected"' : '';
+        $productDropDown .= '<option '.$catSelected.' value="cat_'.$catId.'">-- All '.ucfirst($catRow->name).' --</option>';
+
+        foreach($productsByCategory[$catId] as $prodRow){
+            $prodSelected = ($_REQUEST['id_products'] == $prodRow->id) ? 'selected="selected"' : '';
+            $productDropDown .= '<option '.$prodSelected.' value="'.$prodRow->id.'">'.ucfirst($prodRow->name).'</option>';
+        }
+
+        $productDropDown .= '</optgroup>';
+    }
+
+    if(!empty($uncategorized)){
+        $productDropDown .= '<optgroup label="Uncategorized">';
+        foreach($uncategorized as $prodRow){
+            $prodSelected = ($_REQUEST['id_products'] == $prodRow->id) ? 'selected="selected"' : '';
+            $productDropDown .= '<option '.$prodSelected.' value="'.$prodRow->id.'">'.ucfirst($prodRow->name).'</option>';
+        }
+        $productDropDown .= '</optgroup>';
+    }
+
+    echo $productDropDown . '</select>';
+    ?>
+  </div>
+</div>
 			  
             <div class="form-group col-sm-4">
               <label for="date_created">
