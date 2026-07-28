@@ -108,7 +108,7 @@ if($_REQUEST['process'] !='secureLogout'){
 	else{
 		$_SESSION['errorMsg']=$_POST['shopCode'].' '.' incorrect shop code !';
 		mysqli_close($conn);
-		header("location:index.php");
+		header("location:indexbeta.php");
 		exit;
 	}
 }
@@ -140,7 +140,7 @@ switch($process){
 			exit;
 		}else{
 			$_SESSION['sessMsg'] = 50;
-			header("location:index.php");
+			header("location:indexbeta.php");
 		}
 	break;
 	case "changePassword":
@@ -180,7 +180,7 @@ switch($process){
 				exit;
 			}
 		}else{
-			header("location:index.php");
+			header("location:indexbeta.php");
 			exit;
 		}
 	break;
@@ -189,7 +189,7 @@ switch($process){
 				$_SESSION['userid']="";
 				$_SESSION['username']="";
 				session_destroy();
-				header("location:index.php");
+				header("location:indexbeta.php");
 	break;
 	
 	case "secureLogin":
@@ -220,28 +220,28 @@ switch($process){
 					$_SESSION['otpShopCode']    = $_POST['shopCode'];
 					$_SESSION['otpAttempts']    = 0;
 					$_SESSION['successMsg']     = 'An OTP has been sent to your registered email. Please enter it below to continue.';
-					header('location:index.php?otp=1');
+					header('location:indexbeta.php?otp=1');
 					exit;
 					/* --------------------------------------------------------------------------- */
 				}else{
 					$_SESSION['errorMsg'] = 'Invalid login details. Please try again.';
-					header("location:index.php");
+					header("location:indexbeta.php");
 					exit;
 				}
 			}else{
 				if(empty($_POST['g-recaptcha-response'])){
 							 $_SESSION['errorMsg'] = 'Unable to verify. Please try again.';
-								header("location:index.php");
+								header("location:indexbeta.php");
 									
 						}else{
 							$_SESSION['errorMsg'] = 'Invalid login details. Please try again.';
-						header("location:index.php");
+						header("location:indexbeta.php");
 						exit;
 						}
 			}
 		}else{
 			
-			header("location:index.php");
+			header("location:indexbeta.php");
 			exit;
 		}
 	break;
@@ -252,7 +252,7 @@ switch($process){
 	case "verifyOtp":
 		if(empty($_SESSION['otpPendingUser'])){
 			$_SESSION['errorMsg'] = 'Your OTP session has expired. Please login again.';
-			header('location:index.php');
+			header('location:indexbeta.php');
 			exit;
 		}
 
@@ -304,26 +304,26 @@ switch($process){
 				unset($_SESSION['otpShopCode']);
 				unset($_SESSION['otpAttempts']);
 				$_SESSION['errorMsg'] = 'Too many incorrect attempts. Please login again.';
-				header('location:index.php');
+				header('location:indexbeta.php');
 				exit;
 			}
 
 			$_SESSION['errorMsg'] = 'Invalid or expired OTP. Please try again.';
-			header('location:index.php?otp=1');
+			header('location:indexbeta.php?otp=1');
 			exit;
 		}
 	break;
 
 	case "resendOtp":
 		if(empty($_SESSION['otpPendingUser'])){
-			header('location:index.php');
+			header('location:indexbeta.php');
 			exit;
 		}
 		$resultLogin = $_SESSION['otpPendingUser'];
 		generateAndSendOtp($connNew, $resultLogin['id'], $resultLogin['email'], $resultLogin['name']);
 		$_SESSION['otpAttempts'] = 0;
 		$_SESSION['successMsg'] = 'A new OTP has been sent to your email.';
-		header('location:index.php?otp=1');
+		header('location:indexbeta.php?otp=1');
 		exit;
 	break;
 
@@ -356,7 +356,7 @@ switch($process){
 		unset($_SESSION['otpShopCode']);
 		unset($_SESSION['otpAttempts']);
 		$_SESSION['successMsg'] = 'You have been sucessfully logged out.';
-		header("location:index.php");
+		header("location:indexbeta.php");
 		exit;
 	break;	
 }?>
