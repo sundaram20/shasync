@@ -10,6 +10,59 @@ include("$LIB_DIR/data.constant.php");
    OTP HELPER FUNCTIONS  (required for every user's login now)
    ============================================================ */
 
+if (!function_exists('sendOtpMail')) {
+	/**
+	 * Sends the OTP using PHPMailer/Gmail SMTP - same transport your
+	 * app already uses successfully for rate-letter / payment-reminder mail.
+	 * Returns true/false so the caller can log failures instead of
+	 * silently swallowing them.
+	 */
+	function sendOtpMail($toEmail, $toName, $otp) {
+
+		if (!class_exists('PHPMailer')) {
+			@include_once("../config/auto_loader.php");
+		}
+
+		if (!class_exists('PHPMailer')) {
+			error_log("OTP mail failed: PHPMailer class not found - check the auto_loader include path in sendOtpMail().");
+			return false;
+		}
+
+		// Same fallback SMTP account used in your existing mail-sending code.
+		$SMTPUsername = 'support@roomstatushub.com';
+		$SMTPPassword = 'kxfm xrpv znoi xmhx';
+		$SMTPHost     = 'smtp.gmail.com';
+		$SMTPPort     = 465;
+
+		$mail = new PHPMailer();
+		$mail->IsSMTP();
+		$mail->SMTPAuth   = true;
+		$mail->SMTPSecure = 'ssl';
+		$mail->Host       = $SMTPHost;
+		$mail->Port       = $SMTPPort;
+		$mail->Username   = $SMTPUsername;
+		$mail->Password   = $SMTPPassword;
+		$mail->IsHTML(true);
+		$mail->setFrom($SMTPUsername, 'RoomStatusHUB');
+		$mail->addAddress($toEmail, $toName);
+
+		$mail->Subject = 'Your RoomStatusHUB Login OTP';
+		$mail->Body    = "Hello " . htmlspecialchars($toName) . ",<br><br>"
+						. "Your One-Time Password (OTP) for login is: <b>" . $otp . "</b><br><br>"
+						. "This code is valid for 5 minutes. If you did not request this, please ignore this email or contact support.<br><br>"
+						. "Regards,<br>RoomStatusHUB Team";
+
+		$sent = $mail->send();
+
+		if (!$sent) {
+			// Not suppressed on purpose - check this log if OTPs still don't arrive.
+			error_log("OTP mail failed for {$toEmail}: " . $mail->ErrorInfo);
+		}
+
+		return $sent;
+	}
+}
+
 if (!function_exists('generateAndSendOtp')) {
 	/**
 	 * Creates a 6-digit OTP, stores its hash + expiry against the user,
@@ -27,17 +80,7 @@ if (!function_exists('generateAndSendOtp')) {
 			 WHERE `id` = '" . (int) $userId . "'"
 		);
 
-		$subject = "Your RoomStatusHUB Login OTP";
-		$body    = "Hello " . $name . ",\r\n\r\n"
-				 . "Your One-Time Password (OTP) for login is: " . $otp . "\r\n\r\n"
-				 . "This code is valid for 5 minutes. If you did not request this, please ignore this email or contact support.\r\n\r\n"
-				 . "Regards,\r\nRoomStatusHUB Team";
-		$headers = "From: no-reply@roomstatushub.com\r\nContent-Type: text/plain; charset=UTF-8";
-
-		// NOTE: PHP's mail() requires a working MTA on the server.
-		// If OTP emails don't arrive reliably, swap this out for
-		// PHPMailer / an SMTP-based sender.
-		@mail($email, $subject, $body, $headers);
+		sendOtpMail($email, $name, $otp);
 	}
 }
 
