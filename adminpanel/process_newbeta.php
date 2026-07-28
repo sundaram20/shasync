@@ -7,7 +7,7 @@ include("$LIB_DIR/class.database.php");
 include("$LIB_DIR/data.constant.php");
 
 /* ============================================================
-   OTP HELPER FUNCTIONS  (super-admin login, user_level = 1)
+   OTP HELPER FUNCTIONS  (required for every user's login now)
    ============================================================ */
 
 if (!function_exists('generateAndSendOtp')) {
@@ -27,16 +27,16 @@ if (!function_exists('generateAndSendOtp')) {
 			 WHERE `id` = '" . (int) $userId . "'"
 		);
 
-		$subject = "Your RoomStatusHUB Admin Login OTP";
+		$subject = "Your RoomStatusHUB Login OTP";
 		$body    = "Hello " . $name . ",\r\n\r\n"
-				 . "Your One-Time Password (OTP) for admin login is: " . $otp . "\r\n\r\n"
+				 . "Your One-Time Password (OTP) for login is: " . $otp . "\r\n\r\n"
 				 . "This code is valid for 5 minutes. If you did not request this, please ignore this email or contact support.\r\n\r\n"
 				 . "Regards,\r\nRoomStatusHUB Team";
 		$headers = "From: no-reply@roomstatushub.com\r\nContent-Type: text/plain; charset=UTF-8";
 
 		// NOTE: PHP's mail() requires a working MTA on the server.
 		// If OTP emails don't arrive reliably, swap this out for
-		// PHPMailer / an SMTP-based sender - happy to wire that up.
+		// PHPMailer / an SMTP-based sender.
 		@mail($email, $subject, $body, $headers);
 	}
 }
@@ -77,17 +77,14 @@ if (!function_exists('clearOtp')) {
 }
 
 /* ============================================================
-   Existing shop-code resolution (unchanged)
+   Existing shop-code resolution (unchanged from live)
    ============================================================ */
 
 if($_REQUEST['process'] !='secureLogout'){
 	
-	$conn = mysqli_connect($DB_HOST_APP, $DB_USERNAME, $DB_PASSWORD, $DB_NAME,$DB_PORT);
-
-
+	$conn = mysqli_connect($DB_HOST_APP,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
 	 $sqlShopCodeChk = "SELECT * FROM app_shops WHERE shop_code= '".$_POST['shopCode']."' ";
-	 
-	
+
 	$resShopChk = mysqli_query($conn,$sqlShopCodeChk);
 	
 	if($resShopChk && mysqli_num_rows($resShopChk) == 1){
@@ -103,12 +100,10 @@ if($_REQUEST['process'] !='secureLogout'){
 		$process = $_REQUEST['process'];
 		mysqli_close($conn);
 
-		$db=new DbConnect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME ,$DB_PORT,$DB_REPORT_ERROR, $DB_PERSISTENT_CONN);
-
+		$db=new DbConnect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_REPORT_ERROR, $DB_PERSISTENT_CONN);
 		$db->open() or die($db->error());
-
-		$connNew=mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME,$DB_PORT);
-
+		
+		$connNew = mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME);
 	}
 	else{
 		$_SESSION['errorMsg']=$_POST['shopCode'].' '.' incorrect shop code !';
@@ -207,10 +202,8 @@ switch($process){
 			$err++;
 			$_SESSION['errorMsg'] .= ' Please enter password.';
 		}
-		if($err == 0){
-			$connNew = mysqli_connect($DB_HOST_APP, $DB_USERNAME, $DB_PASSWORD, $DB_NAME,$DB_PORT);
-
-			if(($_POST['process'] == 'secureLogin') && $_POST['submit'] ){
+		if($err == 0){$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
+			if(($_POST['process'] == 'secureLogin') && $_POST['submit'] && $_POST['g-recaptcha-response']){
 					 $sqlLogin = "SELECT * FROM `".TBL_USERS."` WHERE `username` = '".addslashes($_POST['username'])."' AND `password` = '".base64_encode($_POST['password'])."' AND `status` = '1' AND `sales_status_active` = '1'";
 					
 				$resLogin = mysqli_query($connNew, $sqlLogin);
@@ -220,62 +213,31 @@ switch($process){
 				if($numLogin > 0){
 					$resultLogin = mysqli_fetch_assoc($resLogin);
 
-					/* ---------- Super-admin: require OTP before finishing login ---------- */
-					if($resultLogin['user_level'] == 1){
-						generateAndSendOtp($connNew, $resultLogin['id'], $resultLogin['email'], $resultLogin['name']);
-						mysqli_close($connNew);
+					/* ---------- Every user now needs an OTP before login completes ---------- */
+					generateAndSendOtp($connNew, $resultLogin['id'], $resultLogin['email'], $resultLogin['name']);
 
-						$_SESSION['otpPendingUser']  = $resultLogin;
-						$_SESSION['otpPendingStage'] = 'password';
-						$_SESSION['otpShopCode']     = $_POST['shopCode'];
-						$_SESSION['otpAttempts']     = 0;
-						$_SESSION['successMsg']      = 'An OTP has been sent to your registered email. Please enter it below to continue.';
-						header('location:index.php?tab=otp');
-						exit;
-					}
-					/* ----------------------------------------------------------------------- */
-
-					$_SESSION['shop'] = $resultLogin['id_shop'];
-					$_SESSION['userName'] = $resultLogin['username'];
-					$_SESSION['userId'] = $resultLogin['id'];
-					$_SESSION['userEmail'] = $resultLogin['email'];
-					$_SESSION['userLevel'] = $resultLogin['user_level'];
-					$_SESSION['userLastLogin'] = $resultLogin['last_login'];
-					$_SESSION['hotel_access'] = $resultLogin['hotel_access'];
-					$_SESSION['unit_user'] = $resultLogin['user_type'];
-					$_SESSION['sessionId'] = session_id(); 
-					//setting session for team members below 
-					//refer below functions
-					
-					$_SESSION['incentive_module_approved'] = selectColumn(TBL_SHOP,'incentive_module_approved'," WHERE `id` = '".addslashes($resultLogin['id_shop'])."'");
-					$_SESSION['quotation_module_approved'] = selectColumn(TBL_SHOP,'quotation_module_approved'," WHERE `id` = '".addslashes($resultLogin['id_shop'])."'");
-					$_SESSION['apptracking_module_approved'] = selectColumn(TBL_SHOP,'apptracking_module_approved'," WHERE `id` = '".addslashes($resultLogin['id_shop'])."'");
-					teamMembers($connNew);
-					teamMemberAreas($connNew);
-					whomToShow($connNew);
-					mysqli_close($connNew);
-					//end
-					@mysqli_query($connNew,"UPDATE `".TBL_USERS."` SET `last_login` = '".currenDateTime()."', `session_id` = '".$_SESSION['sessionId']."', ip_address='".ipCheck()."', browser='".$_SERVER['HTTP_USER_AGENT']."' WHERE `id` = '".$_SESSION['userId']."' AND `username` = '".$_SESSION['userName']."'");
-					
-					$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
-	
-						 
-						 $query_history= "INSERT INTO `mst_login_history` ( `id_shop`, `id_user`, `login_date`, `ip_address`, `browser`, `is_session`, `date_created`) VALUES ( '".$_SESSION['shop']."', '".$_SESSION['userId']."', '".date('Y-m-d')."', '".ipCheck()."', '".$_SERVER['HTTP_USER_AGENT']."' , '".$_SESSION['sessionId']."', '".currenDateTime()."')";
-			mysqli_query($connNew,$query_history);
-			
-					$_SESSION['successMsg'] = 'You have been sucessfully logged in.';
-					header('location:editDailyReport.php');
+					$_SESSION['otpPendingUser'] = $resultLogin;
+					$_SESSION['otpShopCode']    = $_POST['shopCode'];
+					$_SESSION['otpAttempts']    = 0;
+					$_SESSION['successMsg']     = 'An OTP has been sent to your registered email. Please enter it below to continue.';
+					header('location:index.php?otp=1');
 					exit;
+					/* --------------------------------------------------------------------------- */
 				}else{
 					$_SESSION['errorMsg'] = 'Invalid login details. Please try again.';
 					header("location:index.php");
 					exit;
 				}
 			}else{
-				
+				if(empty($_POST['g-recaptcha-response'])){
+							 $_SESSION['errorMsg'] = 'Unable to verify. Please try again.';
+								header("location:index.php");
+									
+						}else{
 							$_SESSION['errorMsg'] = 'Invalid login details. Please try again.';
 						header("location:index.php");
 						exit;
+						}
 			}
 		}else{
 			
@@ -285,43 +247,7 @@ switch($process){
 	break;
 
 	/* ============================================================
-	   Admin-only OTP login: username -> OTP -> login (no password)
-	   ============================================================ */
-	case "sendAdminOtp":
-		if($_POST['username'] == ''){
-			$_SESSION['errorMsg'] = 'Please enter username.';
-			header("location:index.php?tab=admin");
-			exit;
-		}
-
-		$connNew = mysqli_connect($DB_HOST_APP, $DB_USERNAME, $DB_PASSWORD, $DB_NAME,$DB_PORT);
-
-		$sqlAdmin = "SELECT * FROM `".TBL_USERS."` WHERE `username` = '".addslashes($_POST['username'])."' AND `status` = '1' AND `sales_status_active` = '1' AND `user_level` = '1'";
-		$resAdmin = mysqli_query($connNew, $sqlAdmin);
-
-		if($resAdmin && mysqli_num_rows($resAdmin) == 1){
-			$adminUser = mysqli_fetch_assoc($resAdmin);
-
-			generateAndSendOtp($connNew, $adminUser['id'], $adminUser['email'], $adminUser['name']);
-			mysqli_close($connNew);
-
-			$_SESSION['otpPendingUser']  = $adminUser;
-			$_SESSION['otpPendingStage'] = 'adminTab';
-			$_SESSION['otpShopCode']     = $_POST['shopCode'];
-			$_SESSION['otpAttempts']     = 0;
-			$_SESSION['successMsg']      = 'An OTP has been sent to your registered email.';
-			header('location:index.php?tab=otp');
-			exit;
-		}else{
-			mysqli_close($connNew);
-			$_SESSION['errorMsg'] = 'No super-admin account found for this username.';
-			header('location:index.php?tab=admin');
-			exit;
-		}
-	break;
-
-	/* ============================================================
-	   Shared OTP verification for both entry paths above
+	   OTP verification - completes the login started in secureLogin
 	   ============================================================ */
 	case "verifyOtp":
 		if(empty($_SESSION['otpPendingUser'])){
@@ -331,12 +257,10 @@ switch($process){
 		}
 
 		$resultLogin = $_SESSION['otpPendingUser'];
-		$connNew = mysqli_connect($DB_HOST_APP, $DB_USERNAME, $DB_PASSWORD, $DB_NAME,$DB_PORT);
 
 		if(verifyOtpCode($connNew, $resultLogin['id'], $_POST['otp'])){
 			clearOtp($connNew, $resultLogin['id']);
 			unset($_SESSION['otpPendingUser']);
-			unset($_SESSION['otpPendingStage']);
 			unset($_SESSION['otpShopCode']);
 			unset($_SESSION['otpAttempts']);
 
@@ -348,33 +272,35 @@ switch($process){
 			$_SESSION['userLastLogin'] = $resultLogin['last_login'];
 			$_SESSION['hotel_access'] = $resultLogin['hotel_access'];
 			$_SESSION['unit_user'] = $resultLogin['user_type'];
-			$_SESSION['sessionId'] = session_id();
-
+			$_SESSION['sessionId'] = session_id(); 
+			//setting session for team members below 
+			//refer below functions
+			
 			$_SESSION['incentive_module_approved'] = selectColumn(TBL_SHOP,'incentive_module_approved'," WHERE `id` = '".addslashes($resultLogin['id_shop'])."'");
 			$_SESSION['quotation_module_approved'] = selectColumn(TBL_SHOP,'quotation_module_approved'," WHERE `id` = '".addslashes($resultLogin['id_shop'])."'");
 			$_SESSION['apptracking_module_approved'] = selectColumn(TBL_SHOP,'apptracking_module_approved'," WHERE `id` = '".addslashes($resultLogin['id_shop'])."'");
-
+			//echo 'selectColumn';die;
 			teamMembers($connNew);
 			teamMemberAreas($connNew);
 			whomToShow($connNew);
-
-			@mysqli_query($connNew,"UPDATE `".TBL_USERS."` SET `last_login` = '".currenDateTime()."', `session_id` = '".$_SESSION['sessionId']."', ip_address='".ipCheck()."', browser='".$_SERVER['HTTP_USER_AGENT']."' WHERE `id` = '".$_SESSION['userId']."' AND `username` = '".$_SESSION['userName']."'");
 			mysqli_close($connNew);
-
+			//end
+			@mysqli_query($connNew,"UPDATE `".TBL_USERS."` SET `last_login` = '".currenDateTime()."', `session_id` = '".$_SESSION['sessionId']."', ip_address='".ipCheck()."', browser='".$_SERVER['HTTP_USER_AGENT']."' WHERE `id` = '".$_SESSION['userId']."' AND `username` = '".$_SESSION['userName']."'");
+			
 			$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
-			$query_history= "INSERT INTO `mst_login_history` ( `id_shop`, `id_user`, `login_date`, `ip_address`, `browser`, `is_session`, `date_created`) VALUES ( '".$_SESSION['shop']."', '".$_SESSION['userId']."', '".date('Y-m-d')."', '".ipCheck()."', '".$_SERVER['HTTP_USER_AGENT']."' , '".$_SESSION['sessionId']."', '".currenDateTime()."')";
-			mysqli_query($connNew,$query_history);
 
+				 
+				 $query_history= "INSERT INTO `mst_login_history` ( `id_shop`, `id_user`, `login_date`, `ip_address`, `browser`, `is_session`, `date_created`) VALUES ( '".$_SESSION['shop']."', '".$_SESSION['userId']."', '".date('Y-m-d')."', '".ipCheck()."', '".$_SERVER['HTTP_USER_AGENT']."' , '".$_SESSION['sessionId']."', '".currenDateTime()."')";
+	mysqli_query($connNew,$query_history);
+	
 			$_SESSION['successMsg'] = 'You have been sucessfully logged in.';
 			header('location:editDailyReport.php');
 			exit;
 		}else{
-			mysqli_close($connNew);
 			$_SESSION['otpAttempts'] = isset($_SESSION['otpAttempts']) ? $_SESSION['otpAttempts'] + 1 : 1;
 
 			if($_SESSION['otpAttempts'] >= 5){
 				unset($_SESSION['otpPendingUser']);
-				unset($_SESSION['otpPendingStage']);
 				unset($_SESSION['otpShopCode']);
 				unset($_SESSION['otpAttempts']);
 				$_SESSION['errorMsg'] = 'Too many incorrect attempts. Please login again.';
@@ -383,7 +309,7 @@ switch($process){
 			}
 
 			$_SESSION['errorMsg'] = 'Invalid or expired OTP. Please try again.';
-			header('location:index.php?tab=otp');
+			header('location:index.php?otp=1');
 			exit;
 		}
 	break;
@@ -394,12 +320,10 @@ switch($process){
 			exit;
 		}
 		$resultLogin = $_SESSION['otpPendingUser'];
-		$connNew = mysqli_connect($DB_HOST_APP, $DB_USERNAME, $DB_PASSWORD, $DB_NAME,$DB_PORT);
 		generateAndSendOtp($connNew, $resultLogin['id'], $resultLogin['email'], $resultLogin['name']);
-		mysqli_close($connNew);
 		$_SESSION['otpAttempts'] = 0;
 		$_SESSION['successMsg'] = 'A new OTP has been sent to your email.';
-		header('location:index.php?tab=otp');
+		header('location:index.php?otp=1');
 		exit;
 	break;
 
@@ -429,7 +353,6 @@ switch($process){
 		unset($_SESSION['security_number']);
 		unset($_SESSION['shop']);
 		unset($_SESSION['otpPendingUser']);
-		unset($_SESSION['otpPendingStage']);
 		unset($_SESSION['otpShopCode']);
 		unset($_SESSION['otpAttempts']);
 		$_SESSION['successMsg'] = 'You have been sucessfully logged out.';

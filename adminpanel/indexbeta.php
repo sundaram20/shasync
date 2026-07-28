@@ -9,21 +9,16 @@ include("$LIB_DIR/msgs.inc.php");
 include("$LIB_DIR/class.database.php");
 include("$LIB_DIR/data.constant.php");
 
-// --- OTP / login view state ---
 if(isset($_GET['cancelOtp'])){
 	unset($_SESSION['otpPendingUser']);
-	unset($_SESSION['otpPendingStage']);
 	unset($_SESSION['otpShopCode']);
 	unset($_SESSION['otpAttempts']);
 	header('location:index.php');
 	exit;
 }
 
-$otpPending   = !empty($_SESSION['otpPendingUser']);
-$showAdminTab = $otpPending
-	? ($_SESSION['otpPendingStage'] === 'adminTab')
-	: (isset($_GET['tab']) && $_GET['tab'] === 'admin');
-$otpShopCode  = isset($_SESSION['otpShopCode']) ? $_SESSION['otpShopCode'] : '';
+$otpPending  = !empty($_SESSION['otpPendingUser']);
+$otpShopCode = isset($_SESSION['otpShopCode']) ? $_SESSION['otpShopCode'] : '';
 ?>
 <!DOCTYPE html>
 <html>
@@ -208,6 +203,9 @@ margin-top:46px;
 body{
 	background-color: #fff!important;
 }
+.d-flex{
+	
+}
 .has-feedback .form-control {
     padding-right: 32.5px;
     box-shadow: none;
@@ -215,25 +213,6 @@ body{
 }
 .has-feedback span{
   position: absolute;
-}
-/* login-panel tab switcher (Password Login / Admin OTP Login) */
-.login-tab-switch{
-	background-color: transparent;
-	border-bottom: 1px solid rgba(255,255,255,.3);
-}
-.login-tab-switch li a{
-	font-size:12px;
-	padding:8px 12px;
-}
-.login-tab-switch li.active a,
-.login-tab-switch li.active a:hover,
-.login-tab-switch li.active a:focus{
-	background-color: transparent;
-	border-bottom: 2px solid #cc6529;
-	color:#fff;
-}
-.login-tab-switch li a:hover{
-	background-color: transparent;
 }
 .otp-hint{
 	color:#fff;
@@ -384,7 +363,7 @@ body{
 
 		<?php if($otpPending): ?>
 
-			<!-- ============ OTP VERIFICATION STEP ============ -->
+			<!-- ============ OTP VERIFICATION STEP (required for every user) ============ -->
 			<p class="otp-hint">Enter the One-Time Password sent to your registered email address. It is valid for 5 minutes.</p>
 
 			<form name="formOtp" action="process_new.php" method="post">
@@ -414,62 +393,33 @@ body{
 
 		<?php else: ?>
 
-			<ul class="nav nav-tabs login-tab-switch">
-				<li class="<?php echo !$showAdminTab ? 'active' : ''; ?>"><a href="index.php">Password Login</a></li>
-				<li class="<?php echo $showAdminTab ? 'active' : ''; ?>"><a href="index.php?tab=admin">Admin OTP Login</a></li>
-			</ul>
+			<!-- ============ USERNAME + PASSWORD LOGIN (OTP required as step 2 for everyone) ============ -->
+			<form name="form1" action="process_new.php" method="post">
+				<input type="hidden" value="secureLogin" name="process" />
+				<input type="hidden" value="submit" name="submit" />
+				<div class="form-group has-feedback">
+					<input type="text" class="form-control" placeholder="Enter Username" name="username" id="username">
+					<span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+				</div>
+				<div class="form-group has-feedback">
+					<input type="password" class="form-control" placeholder="Password" name="password" id="password">
+					<span class="glyphicon glyphicon-lock form-control-feedback"></span>
+				</div>
+				<div class="form-group has-feedback">
+					<input type="text" required class="form-control" placeholder="Enter Corporate Code" name="shopCode" id="shopCode">
+					<span class="glyphicon glyphicon-home form-control-feedback"></span>
+				</div>
+				<br>
 
-			<?php if(!$showAdminTab): ?>
-
-				<!-- ============ NORMAL USERNAME + PASSWORD LOGIN ============ -->
-				<!-- Super-admin accounts (user_level = 1) are redirected to the OTP step automatically after this. -->
-				<form name="form1" action="process_new.php" method="post">
-					<input type="hidden" value="secureLogin" name="process" />
-					<input type="hidden" value="submit" name="submit" />
-					<div class="form-group has-feedback">
-						<input type="text" class="form-control" placeholder="Enter Username" name="username" id="username">
-						<span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+				<div required="required" class="g-recaptcha" data-sitekey="6LcKsSweAAAAAGBhJYEfjwoF8U2b_1eKU_RVWSwJ"></div> 
+				<?php echo $test=""; ?>	
+				<br>
+				<div class="row mt-4">        
+					<div class="col-md-12">
+						<button type="submit"  class="btn  o-btn">Sign In</button>
 					</div>
-					<div class="form-group has-feedback">
-						<input type="password" class="form-control" placeholder="Password" name="password" id="password">
-						<span class="glyphicon glyphicon-lock form-control-feedback"></span>
-					</div>
-					<div class="form-group has-feedback">
-						<input type="text" required class="form-control" placeholder="Enter Corporate Code" name="shopCode" id="shopCode">
-						<span class="glyphicon glyphicon-home form-control-feedback"></span>
-					</div>
-					<br>
-					<div class="row mt-4">
-						<div class="col-md-12">
-							<button type="submit" class="btn o-btn">Sign In</button>
-						</div>
-					</div>
-				</form>
-
-			<?php else: ?>
-
-				<!-- ============ ADMIN-ONLY OTP LOGIN (username -> emailed OTP) ============ -->
-				<p class="otp-hint">For Super Admins only. Enter your username and we'll email you a one-time password.</p>
-				<form name="formAdminOtp" action="process_new.php" method="post">
-					<input type="hidden" value="sendAdminOtp" name="process" />
-					<input type="hidden" value="submit" name="submit" />
-					<div class="form-group has-feedback">
-						<input type="text" class="form-control" placeholder="Enter Username" name="username" id="adminUsername">
-						<span class="glyphicon glyphicon-envelope form-control-feedback"></span>
-					</div>
-					<div class="form-group has-feedback">
-						<input type="text" required class="form-control" placeholder="Enter Corporate Code" name="shopCode" id="adminShopCode">
-						<span class="glyphicon glyphicon-home form-control-feedback"></span>
-					</div>
-					<br>
-					<div class="row mt-4">
-						<div class="col-md-12">
-							<button type="submit" class="btn o-btn">Send OTP</button>
-						</div>
-					</div>
-				</form>
-
-			<?php endif; ?>
+				</div>
+			</form>
 
 		<?php endif; ?>
 			
@@ -545,21 +495,33 @@ body{
   });
 </script>
 <script>
-// Tab-Pane change function (product carousel only)
+// default bootstrap click, apenas muda com ação do utilizador
+//$('#myTab a').click(function (e) {
+//  e.preventDefault()
+//  $(this).tab('show')
+//})
+
+// Tab-Pane change function
     var tabChange = function(){
-        var tabs = $('#tab-carousel .nav-tabs > li');
+        var tabs = $('.nav-tabs > li');
         var active = tabs.filter('.active');
         var next = active.next('li').length? active.next('li').find('a') : tabs.filter(':first-child').find('a');
+        // Bootsrap tab show, para ativar a tab
         next.tab('show')
-    }
+    } //comment
+    // Tab Cycle function
     var tabCycle = setInterval(tabChange, 10000)
+    // Tab click event handler
     $(function(){
-        $('#tab-carousel .nav-tabs a').click(function(e) {
+        $('.nav-tabs a').click(function(e) {
             e.preventDefault();
+            // Parar o loop
             clearInterval(tabCycle);
+            // mosta o tab clicado, default bootstrap
             $(this).tab('show')
+            // Inicia o ciclo outra vez
             setTimeout(function(){
-                tabCycle = setInterval(tabChange, 10000)
+                tabCycle = setInterval(tabChange, 10000)//quando recomeça assume este timing
             }, 10000);
         });
     });
@@ -591,7 +553,25 @@ function CheckCaptcha($userResponse) {
         return json_decode($res, true);
     }
 
+
+    // Call the function CheckCaptcha
+    $result = CheckCaptcha($_POST['g-recaptcha-response']);
+
+    if ($result['success']) {
+        //If the user has checked the Captcha box
+        echo "Captcha verified Successfully";
+	
+    } else {
+        // If the CAPTCHA box wasn't checked
+       echo '<script>alert("Error Message");</script>';
+    }
 }
+  
+   
+
+   
+
+  
       
     ?>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
