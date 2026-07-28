@@ -6,6 +6,13 @@ include("$LIB_DIR/msgs.inc.php");
 include("$LIB_DIR/class.database.php");
 include("$LIB_DIR/data.constant.php");
 
+// Your existing code (shop-code lookup, secureLogin, etc.) was written assuming
+// mysqli failures return false silently, which was PHP's default before 8.1.
+// PHP 8.1+ throws an uncaught mysqli_sql_exception on any query error instead,
+// which turns any DB hiccup into a fatal 500 instead of the graceful fallback
+// this code expects. This restores the old behavior everywhere in this file.
+mysqli_report(MYSQLI_REPORT_OFF);
+
 /* ============================================================
    OTP HELPER FUNCTIONS  (required for every user's login now)
    ============================================================ */
@@ -19,6 +26,11 @@ if (!function_exists('sendOtpMail')) {
 	 */
 	function sendOtpMail($toEmail, $toName, $otp) {
 
+		// PHPMailer needs to be loaded. Your mailbox.php example loads it via:
+		//   include_once("../../config/auto_loader.php");
+		// from a file one level deeper than this one, so from here (adminpanel root)
+		// the equivalent path is one level up. If this path is wrong for your
+		// setup, adjust it to wherever auto_loader.php (or PHPMailer directly) lives.
 		if (!class_exists('PHPMailer')) {
 			@include_once("../config/auto_loader.php");
 		}
