@@ -13,7 +13,7 @@ if(isset($_GET['cancelOtp'])){
 	unset($_SESSION['otpPendingUser']);
 	unset($_SESSION['otpShopCode']);
 	unset($_SESSION['otpAttempts']);
-	header('location:index.php');
+	header('location:indexbeta.php');
 	exit;
 }
 
@@ -388,7 +388,7 @@ body{
 					<input type="hidden" value="<?php echo htmlspecialchars($otpShopCode, ENT_QUOTES); ?>" name="shopCode" />
 					<button type="submit" class="btn btn-link btn-sm text-light" style="padding-left:0;">Resend OTP</button>
 				</form>
-				<a href="index.php?cancelOtp=1" class="btn-link text-light" style="font-size:13px;">Cancel</a>
+				<a href="indexbeta.php?cancelOtp=1" class="btn-link text-light" style="font-size:13px;">Cancel</a>
 			</div>
 
 		<?php else: ?>
