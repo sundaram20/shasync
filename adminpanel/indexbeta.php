@@ -366,7 +366,7 @@ body{
 			<!-- ============ OTP VERIFICATION STEP (required for every user) ============ -->
 			<p class="otp-hint">Enter the One-Time Password sent to your registered email address. It is valid for 5 minutes.</p>
 
-			<form name="formOtp" action="process_new.php" method="post">
+			<form name="formOtp" action="process_newbeta.php" method="post">
 				<input type="hidden" value="verifyOtp" name="process" />
 				<input type="hidden" value="submit" name="submit" />
 				<input type="hidden" value="<?php echo htmlspecialchars($otpShopCode, ENT_QUOTES); ?>" name="shopCode" />
@@ -382,7 +382,7 @@ body{
 			</form>
 
 			<div style="margin-top:10px;">
-				<form name="formResendOtp" action="process_new.php" method="post" style="display:inline-block;margin-right:10px;">
+				<form name="formResendOtp" action="process_newbeta.php" method="post" style="display:inline-block;margin-right:10px;">
 					<input type="hidden" value="resendOtp" name="process" />
 					<input type="hidden" value="submit" name="submit" />
 					<input type="hidden" value="<?php echo htmlspecialchars($otpShopCode, ENT_QUOTES); ?>" name="shopCode" />
@@ -394,7 +394,7 @@ body{
 		<?php else: ?>
 
 			<!-- ============ USERNAME + PASSWORD LOGIN (OTP required as step 2 for everyone) ============ -->
-			<form name="form1" action="process_new.php" method="post">
+			<form name="form1" action="process_newbeta.php" method="post">
 				<input type="hidden" value="secureLogin" name="process" />
 				<input type="hidden" value="submit" name="submit" />
 				<div class="form-group has-feedback">
