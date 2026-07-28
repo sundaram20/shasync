@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();	
 include("../config/data.config.php");
 include("$LIB_DIR/functions.library.php");
@@ -16,8 +16,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
 /* ============================================================
    OTP HELPER FUNCTIONS  (required for every user's login now)
    ============================================================ */
-
-if (!function_exists('sendOtpMail')) {
+if (!function_exists('sendOtpMail')) { 
 	/**
 	 * Sends the OTP using PHPMailer/Gmail SMTP - same transport your
 	 * app already uses successfully for rate-letter / payment-reminder mail.
@@ -26,15 +25,10 @@ if (!function_exists('sendOtpMail')) {
 	 */
 	function sendOtpMail($toEmail, $toName, $otp) {
 
-		// PHPMailer needs to be loaded. Your mailbox.php example loads it via:
-		//   include_once("../../config/auto_loader.php");
-		// from a file one level deeper than this one, so from here (adminpanel root)
-		// the equivalent path is one level up. If this path is wrong for your
-		// setup, adjust it to wherever auto_loader.php (or PHPMailer directly) lives.
 		if (!class_exists('PHPMailer')) {
 			@include_once("../config/auto_loader.php");
 		}
-
+echo 'PHPMailer class exists: ' . (class_exists('PHPMailer') ? 'YES' : 'NO'); die;
 		if (!class_exists('PHPMailer')) {
 			error_log("OTP mail failed: PHPMailer class not found - check the auto_loader include path in sendOtpMail().");
 			return false;
@@ -67,7 +61,6 @@ if (!function_exists('sendOtpMail')) {
 		$sent = $mail->send();
 
 		if (!$sent) {
-			// Not suppressed on purpose - check this log if OTPs still don't arrive.
 			error_log("OTP mail failed for {$toEmail}: " . $mail->ErrorInfo);
 		}
 
@@ -91,6 +84,12 @@ if (!function_exists('generateAndSendOtp')) {
 			 SET `login_otp` = '" . addslashes($otpHash) . "', `otp_expiry` = '" . $expiry . "' 
 			 WHERE `id` = '" . (int) $userId . "'"
 		);
+
+		// Handy while testing locally: OTP also lands in the PHP error log
+		// so you don't have to wait on real email delivery every time.
+		if (!empty($GLOBALS['IS_LOCAL_DEV'])) {
+			error_log("[LOCAL DEV] OTP for user id {$userId} ({$email}): {$otp}");
+		}
 
 		sendOtpMail($email, $name, $otp);
 	}
@@ -132,12 +131,12 @@ if (!function_exists('clearOtp')) {
 }
 
 /* ============================================================
-   Existing shop-code resolution (unchanged from live)
+   Existing shop-code resolution - now passing $DB_PORT everywhere
    ============================================================ */
 
 if($_REQUEST['process'] !='secureLogout'){
 	
-	$conn = mysqli_connect($DB_HOST_APP,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
+	$conn = mysqli_connect($DB_HOST_APP,$DB_USERNAME,$DB_PASSWORD,$DB_NAME,$DB_PORT);
 	 $sqlShopCodeChk = "SELECT * FROM app_shops WHERE shop_code= '".$_POST['shopCode']."' ";
 
 	$resShopChk = mysqli_query($conn,$sqlShopCodeChk);
@@ -155,10 +154,10 @@ if($_REQUEST['process'] !='secureLogout'){
 		$process = $_REQUEST['process'];
 		mysqli_close($conn);
 
-		$db=new DbConnect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_REPORT_ERROR, $DB_PERSISTENT_CONN);
+		$db=new DbConnect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_PORT, $DB_REPORT_ERROR, $DB_PERSISTENT_CONN);
 		$db->open() or die($db->error());
 		
-		$connNew = mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME);
+		$connNew = mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_PORT);
 	}
 	else{
 		$_SESSION['errorMsg']=$_POST['shopCode'].' '.' incorrect shop code !';
@@ -170,8 +169,8 @@ if($_REQUEST['process'] !='secureLogout'){
 else{
 	$process = $_REQUEST['process'];
 	
-	$db=new DbConnect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_REPORT_ERROR, $DB_PERSISTENT_CONN);
-	$connNew=mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME);
+	$db=new DbConnect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_PORT, $DB_REPORT_ERROR, $DB_PERSISTENT_CONN);
+	$connNew=mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME, $DB_PORT);
 
 	$db->open() or die($db->error());
 }	
@@ -257,8 +256,10 @@ switch($process){
 			$err++;
 			$_SESSION['errorMsg'] .= ' Please enter password.';
 		}
-		if($err == 0){$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
-			if(($_POST['process'] == 'secureLogin') && $_POST['submit'] && $_POST['g-recaptcha-response']){
+		if($err == 0){$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME,$DB_PORT);
+			// Captcha requirement is skipped automatically when $IS_LOCAL_DEV is set
+			// (local data.config.php only) - live behavior is unchanged.
+			if(($_POST['process'] == 'secureLogin') && $_POST['submit'] && (!empty($IS_LOCAL_DEV) || $_POST['g-recaptcha-response'])){
 					 $sqlLogin = "SELECT * FROM `".TBL_USERS."` WHERE `username` = '".addslashes($_POST['username'])."' AND `password` = '".base64_encode($_POST['password'])."' AND `status` = '1' AND `sales_status_active` = '1'";
 					
 				$resLogin = mysqli_query($connNew, $sqlLogin);
@@ -284,7 +285,7 @@ switch($process){
 					exit;
 				}
 			}else{
-				if(empty($_POST['g-recaptcha-response'])){
+				if(empty($IS_LOCAL_DEV) && empty($_POST['g-recaptcha-response'])){
 							 $_SESSION['errorMsg'] = 'Unable to verify. Please try again.';
 								header("location:indexbeta.php");
 									
@@ -342,7 +343,7 @@ switch($process){
 			//end
 			@mysqli_query($connNew,"UPDATE `".TBL_USERS."` SET `last_login` = '".currenDateTime()."', `session_id` = '".$_SESSION['sessionId']."', ip_address='".ipCheck()."', browser='".$_SERVER['HTTP_USER_AGENT']."' WHERE `id` = '".$_SESSION['userId']."' AND `username` = '".$_SESSION['userName']."'");
 			
-			$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME);
+			$connNew = mysqli_connect($DB_HOST,$DB_USERNAME,$DB_PASSWORD,$DB_NAME,$DB_PORT);
 
 				 
 				 $query_history= "INSERT INTO `mst_login_history` ( `id_shop`, `id_user`, `login_date`, `ip_address`, `browser`, `is_session`, `date_created`) VALUES ( '".$_SESSION['shop']."', '".$_SESSION['userId']."', '".date('Y-m-d')."', '".ipCheck()."', '".$_SERVER['HTTP_USER_AGENT']."' , '".$_SESSION['sessionId']."', '".currenDateTime()."')";
