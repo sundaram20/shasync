@@ -1,394 +1,139 @@
-<?php include_once("../../config/auto_loader.php");
-
-
-/************ Check for Mobile Number *************/
-	$mob_no = selectColumn(TBL_CUSTOMER,'mobile','WHERE id_customer="'.$_REQUEST['id_contacts'].'" ');
-	
-	//if($mob_no==''){
-		//echo '<span style="color:red;"> Mobile Number Is Mandatory.Please Edit The Details of Contact Person.</span>';
-		//exit;
-	//}
-/************ Check End *************/
-
-	$err = 0;
-
-	if($err == 0){//No error
-
-		if(($_POST['Save'] == 'Add') && empty($_POST['eId'])){//add	
-			// fetching follow_up_summary
-			if(!empty($_SESSION['followup_description'])){
-				foreach($_SESSION['followup_description'] as $dataCode =>$value){
-					$follow_up_summary=$value;
-					$follow_up_date=$_SESSION['followup_date'][$dataCode];
-					$assign_user = $_SESSION['assign_followup_user_id'][$dataCode];
-				}
-			}
-			
-			if(!empty($_SESSION['followup_description'])){
-			
-	$addEnq ="  			INSERT INTO `".TBL_DAILY_TASK."` SET 							
-							`id_shop` = '".addslashes($_SESSION['shop'])."',
-							`id_company` = '".addslashes($_POST['id_company'])."',	
-							`id_calls` = '".addslashes(encryptor('decrypt',$_REQUEST['id_calls']))."',	
-							`hotel_id` = '".addslashes($_POST['id_hotel_md'])."',	
-							`id_contact`='".$_POST['id_contacts']."',
-							 `id_user` = '".addslashes($_SESSION['userId'])."',	
-							`status` = '1',
-							`assign_user_id`='".$assign_user."',
-							`type` = '8',
-							`details` = '".addslashes($_POST['discussion_summary'])."',
-							`created_date`='".date('Y-m-d')."',	
-							`dated`='".addslashes(date('Y-m-d',strtotime($_POST['enquiryDate'])))."',
-							
-							`expected_check_in_date`='".addslashes(date('Y-m-d',strtotime($_POST['expected_check_in_date'])))."',
-							`expected_revenue` = '".addslashes($_POST['expected_revenue'])."',
-							`expected_room_nights` = '".addslashes($_POST['expected_room_nights'])."',
-							`percentage_of_conversion` = '".addslashes($_POST['percentage_of_conversion'])."',
-							
-							
-							`follow_up_summary`='".$follow_up_summary."',
-							`follow_up_date`='".date('Y-m-d',strtotime($follow_up_date))."',
-							`created_by`='".addslashes($_SESSION['userId'])."',
-							`date_created`='".currenDateTime()."',
-							`modified_by`='".addslashes($_SESSION['userId'])."',
-							`date_modified`='".currenDateTime()."',
-							`lead_status` = '".addslashes($_POST['status'])."'
-							";
-						
-
-			if(executeSql($addEnq)){				
-
-				$VisiteReportInsertId= $db->insert_id();
-				$count =1;
-				$insertCalendar = "INSERT INTO `".TBL_DAILY_CALENDER."` SET 
-				 		
-				 		`type`='8',
-						`id_shop` = '".addslashes($_SESSION['shop'])."',
-						`id_user`='".addslashes($_SESSION['userId'])."',
-						`doc_id` ='0',
-						`visit_id` ='".addslashes($VisiteReportInsertId)."',
-						`dated`='".addslashes(date('Y-m-d',strtotime($_POST['enquiryDate'])))."',
-						
-						`status` = '".addslashes($_POST['status'])."'";
-
-				executeSql($insertCalendar);
-	
-
-				 //`followup_summary`='".addslashes($_REQUEST['followup_description'][$dataCode])."',
-				
-				$reminderDate=0;
-			if($_SESSION['followup_hotel_id']!=""){
-				foreach($_SESSION['followup_hotel_id'] as $dataCode =>$key){
-					$count =0;
-				 	$insertfollowup = "INSERT INTO `".TBL_DAILY_TASK_DETAILS."` SET 
-				 		
-				 		`id_company` = '".addslashes($_POST['id_company'])."',
-						`enquiry_id`='".addslashes($VisiteReportInsertId)."',
-						`id_shop` = '".addslashes($_SESSION['shop'])."',
-						`hotel_id`='".addslashes($_REQUEST['id_hotel_md'])."',	
-						`id_contact`='".$_REQUEST['id_contacts']."',
-						`id_user`='".addslashes($_SESSION['userId'])."',
-						
-						`created_date`='".date('Y-m-d')."',
-						`details` = '".$_SESSION['followup_description'][$dataCode]."',
-						`assign_user_id` = '".$_SESSION['assign_followup_user_id'][$dataCode]."',
-						`created_by`='".addslashes($_SESSION['userId'])."',
-						`modified_by`='".addslashes($_SESSION['userId'])."',
-						`type` = '8',
-						`dated`  = '".addslashes(date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode])))."',
-						
-						`lead_status` = '".$_SESSION['followupstatus'][$dataCode]."'";
-			  
-						$reminderDate = date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode]));	
-						$count++;
-						executeSql($insertfollowup);
-						$EnquiryInsertId= $db->insert_id();
-
-						$insertCalendar = "INSERT INTO `".TBL_DAILY_CALENDER."` SET 
-				 		`enquiry_details`='1',
-				 		`type`='8',
-						`id_shop` = '".addslashes($_SESSION['shop'])."',
-						`id_user`='".addslashes($_SESSION['userId'])."',
-						`assign_user_id` = '".$_SESSION['assign_followup_user_id'][$dataCode]."',
-						`doc_id` ='".addslashes($EnquiryInsertId)."',
-						`visit_id` ='".addslashes($VisiteReportInsertId)."',
-						`dated`='".date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode]))."',
-						
-						`status` = '".$_SESSION['followupstatus'][$dataCode]."'";
-
-						if(executeSql($insertCalendar)){
-							if(addslashes($_SESSION['assign_followup_user_id'][$dataCode]) != $_SESSION['userId']){
-							$sqlNotify = "INSERT INTO ".TBL_NOTIFICATION." SET
-										`id_shop`='".$_SESSION['shop']."',
-										`source`='Enquiry Follow Up',
-										`id_user_assigned_to`='".addslashes($_SESSION['assign_followup_user_id'][$dataCode])."',
-										`id_user_assigned_by`='".$_SESSION['userId']."',
-										`dated` ='".date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode]))."',
-										`message`='".$_SESSION['followup_description'][$dataCode]."',";
-
-							
-							$sqlNotify .="`last_modified`='".date('Y-m-d H:i:s')."',
-										`date_created`='".date('Y-m-d H:i:s')."',
-										`id_mst_user_created_by`='".$_SESSION['userId']."',
-										`id_mst_user_modified_by`='".$_SESSION['userId']."' ";
-
-							$assingToEmail = $_SESSION['assign_followup_user_id'][$dataCode];
-							executeSql($sqlNotify);	
-							}	
-						}
-				}
-			}	
-							//Do you want to add more?	
-				echo '<p class="help-block">Enquiry has been added 	Successfully!<br>
-				<input type="hidden" id="recentEnqId" value="'.$VisiteReportInsertId.'"/> 
-					 .</p>';
-				exit;
-			}else{
-				$err++;
-				$_SESSION['errorMsg'] = 'Enquiry Not Added!';
-				echo "<script>window.location='editDailyReport.php';</script>";
-			}
-
-
-			}else{
-				$err++;
-				echo  '7';
-				
-				
-			}
-
-		}else if(($_POST['Save'] == 'Edit') && !empty($_POST['eId'])){ //update
-			
-			/*echo "<pre>";
-			print_r($_SESSION);
-			echo "-------------request--------<br>";
-			print_r($_REQUEST);
-			echo "</pre>";
-			exit;*/
-				
-
-		if(!empty($_SESSION['followup_description'])){
-
-			// fetching follow_up_summary
-			if($_SESSION['followup_description']!=""){
-				foreach($_SESSION['followup_description'] as $dataCode =>$value){
-					$follow_up_summary=$value;
-					$follow_up_date=$_SESSION['followup_date'][$dataCode];
-				}
-			}	
-
-			$editSql1 = "    UPDATE `".TBL_DAILY_TASK."` SET 
-`id_shop` = '".addslashes($_SESSION['shop'])."',
-							`id_company` = '".addslashes($_POST['id_company'])."',	
-							`hotel_id` = '".addslashes($_POST['id_hotel_md'])."',	
-							`id_contact`='".$_POST['id_contacts']."',
-							`status` = '".addslashes($_POST['status'])."',
-							`type` = '8',
-							`follow_up_summary`='".$follow_up_summary."',
-							`follow_up_date`='".date('Y-m-d',strtotime($follow_up_date))."',
-							
-							`expected_check_in_date`='".addslashes(date('Y-m-d',strtotime($_POST['expected_check_in_date'])))."',
-							`expected_revenue` = '".addslashes($_POST['expected_revenue'])."',
-							`expected_room_nights` = '".addslashes($_POST['expected_room_nights'])."',
-							`percentage_of_conversion` = '".addslashes($_POST['percentage_of_conversion'])."',
-							
-							`details` = '".addslashes($_POST['discussion_summary'])."',
-							`dated`='".addslashes(date('Y-m-d',strtotime($_POST['enquiryDate'])))."',
-							`modified_by`='".addslashes($_SESSION['userId'])."',
-							`date_modified`='".currenDateTime()."',
-							`lead_status` = '".addslashes($_POST['status'])."'";
-
-			 $editSql1 .= "	
-							WHERE `id` = '".addslashes(encryptor('decrypt',$_POST[eId]))."'";
-
-							
-
-			if(executeSql($editSql1)){
-
-				
-
-				
-
-				//executeSql("DELETE from `".TBL_DAILYVISIT_FOLLOWUP."` where daily_Visit_id='".addslashes(encryptor('decrypt',$_POST['eId']))."' ");
-
-				//executeSql("DELETE from `".TBL_DAILY_TASK."` where id='".addslashes(encryptor('decrypt',$_POST['eId']))."' ");
-
-				$enquiry_close_sum=selectColumn(TBL_DAILY_TASK_DETAILS,'enquiry_close_summary','where enquiry_id="'.addslashes(encryptor('decrypt',$_POST['eId'])).'" ');
-				$close_up_id=selectColumn(TBL_DAILY_TASK_DETAILS,'followup_close_type_id','where enquiry_id="'.addslashes(encryptor('decrypt',$_POST['eId'])).'" ');
-
-				executeSql("DELETE from `".TBL_DAILY_TASK_DETAILS."` where type='8' and enquiry_id='".addslashes(encryptor('decrypt',$_POST['eId']))."' ");
-
-				
-				executeSql("DELETE from `".TBL_DAILY_CALENDER."` where type='8' and visit_id='".addslashes(encryptor('decrypt',$_POST['eId']))."' ");
-
-
-				//  `followup_summary`='".addslashes($_REQUEST['followup_description'][$dataCode])."',
-
-				//
-				
-
-				$VisiteReportInsertId= addslashes(encryptor('decrypt',$_POST[eId]));
-				$count =1;
-				 $insertCalendar = "INSERT INTO `".TBL_DAILY_CALENDER."` SET 
-				 		
-				 		`type`='8',
-						`id_shop` = '".addslashes($_SESSION['shop'])."',
-						`id_user`='".addslashes($_SESSION['userId'])."',
-						
-						`visit_id` ='".addslashes($VisiteReportInsertId)."',
-						`dated`='".addslashes(date('Y-m-d',strtotime($_POST['enquiryDate'])))."',
-						`enquiry_details`='0',
-						`status` = '".addslashes($_POST['status'])."'";
-
-				executeSql($insertCalendar);
-	
-
-				 //`followup_summary`='".addslashes($_REQUEST['followup_description'][$dataCode])."',
-				
-				$reminderDate=0;
-				if($_SESSION['followup_hotel_id']!=""){
-					foreach($_SESSION['followup_hotel_id'] as $dataCode =>$key){
-						$count =0;
-					 	$insertfollowup = "INSERT INTO `".TBL_DAILY_TASK_DETAILS."` SET 
-					 		
-					 		`id_company` = '".addslashes($_POST['id_company'])."',
-							`enquiry_id`='".addslashes($VisiteReportInsertId)."',
-							`id_shop` = '".addslashes($_SESSION['shop'])."',
-							`hotel_id`='".addslashes($_REQUEST['id_hotel_md'])."',	
-							`followup_close_type_id`='".$close_up_id."',
-							`enquiry_close_summary`='".$enquiry_close_sum."',					
-							`id_user` = '".$_SESSION['userId']."',
-							`assign_user_id` = '".$_SESSION['assign_followup_user_id'][$dataCode]."',							
-							`type`='8',
-							`id_contact`='".$_REQUEST['id_contacts']."',
-							`details` = '".$_SESSION['followup_description'][$dataCode]."',
-							`created_by`='".addslashes($_SESSION['followup_created_by'][$dataCode])."',	
-							`modified_by`='".addslashes($_SESSION['followup_modified_by'][$dataCode])."',						
-							`created_date`  = '".date('Y-m-d')."',
-							`dated`='".addslashes(date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode])))."',
-							`lead_status` = '".$_SESSION['followupstatus'][$dataCode]."'";
-				  
-							$reminderDate = date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode]));	
-							$count++;
-							executeSql($insertfollowup);
-							$EnquiryInsertId= $db->insert_id();
-							
-							$insertCalendar = "INSERT INTO `".TBL_DAILY_CALENDER."` SET 
-					 		`enquiry_details`='1',
-					 		`type`='8',
-							`id_shop` = '".addslashes($_SESSION['shop'])."',
-							`id_user`='".addslashes($_SESSION['userId'])."',
-							`doc_id` ='".addslashes($EnquiryInsertId)."',
-							`assign_user_id` = '".$_SESSION['assign_followup_user_id'][$dataCode]."',
-							`dated`='".date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode]))."',
-							`visit_id` ='".addslashes($VisiteReportInsertId)."',
-							`status` = '".$_SESSION['followupstatus'][$dataCode]."'";
-
-							executeSql($insertCalendar);
-
-							if(executeSql($insertCalendar)){
-							if(addslashes($_SESSION['assign_followup_user_id'][$dataCode]) != $_SESSION['userId']){
-							$sqlNotify = "INSERT INTO ".TBL_NOTIFICATION." SET
-										`id_shop`='".$_SESSION['shop']."',
-										`source`='Enquiry Follow Up',
-										`id_user_assigned_to`='".addslashes($_SESSION['assign_followup_user_id'][$dataCode])."',
-										`id_user_assigned_by`='".$_SESSION['userId']."',
-										`dated` ='".date('Y-m-d',strtotime($_SESSION['followup_date'][$dataCode]))."',
-										`message`='".$_SESSION['followup_description'][$dataCode]."',";
-
-							
-							$sqlNotify .="`last_modified`='".date('Y-m-d H:i:s')."',
-										`date_created`='".date('Y-m-d H:i:s')."',
-										`id_mst_user_created_by`='".$_SESSION['userId']."',
-										`id_mst_user_modified_by`='".$_SESSION['userId']."' ";
-
-							
-							executeSql($sqlNotify);	
-							}	
-						}
-
-					}
-				}
-				
-
-
-		
-						
-					//$_SESSION['successMsg'] = 'Enquiry Added Successfully!';		
-				//	Do you want to add more
-				echo '<p class="help-block">Enquiry has been added Successfully!<br>
-				
-					<input type="hidden" id="recentEnqId" value="'.addslashes(encryptor('decrypt',$_POST[eId])).'"/>
-					 .</p>';
-						
-
-				
-
-				
-
-				//FeedBack============================Start
-		
-
-				
-
-				
-
-				    $resContact = selectSql(TBL_CUSTOMER,"where type='2' and id_customer='".addslashes($_POST['id_contacts'])."'",''); 
-
-		  			$resultContact = $db->fetch_object2($resContact);
-
-                    $NAme	=	$resultContact->first_name.' '.$resultContact->last_name;
-
-				
-
-				
-
-				$_SESSION['successMsg'] = 'Updated sucessfully.';
-
-				//header("location:addreport.php?eId=".$_GET['eId']."&action=edit&page=".$_REQUEST['page']);
-
-				/*echo '<p class="help-block">Follow Up has been updated sucessfully.</p><script>window.setTimeout(function() {window.location.href = "editDailyReport.php";}, 2000);</script>';*/
-
-				exit;
-
-			}else{
-
-				$err++;
-
-				$_SESSION['errorMsg'] = selectColumn(TBL_COMPANY,'name'," WHERE `id_company` = '".addslashes(encryptor('decrypt',$_POST[eId]))."'").' details has not been saved. Please make corrections below.';
-
-			}
-			
-		}else{
-				$err++;
-				echo  '7';
-				
-				
-			}
-
-		}
-
-	}else{ //Error
-
-		$err++;
-
-		$_SESSION['errorMsg'] = 'Company details has not been saved. Please make corrections.';
-
+<?php
+include_once("../../config/auto_loader.php");
+
+/*
+	Handles the "Add Task" bulk form only. Editing an existing task item
+	is handled separately by ajaxUpdateTaskDetail.php (it appends a new
+	task_details row rather than touching the task table at all).
+
+	Expects:
+	  task_date             -> single date, dd-mm-yyyy (shared across all rows)
+	  id_executive           -> single user id (initial assignment, shared across all rows)
+	  id_team                -> single team id (shared across all rows)
+	  module[]                -> array, one per row
+	  description[]           -> array, one per row
+	  estimated_delivery[]    -> array, one per row
+	  task_status[]           -> array, one per row
+	  completed_date[]        -> array, one per row (only used when status = Completed)
+
+	Each row creates its own independent `task` row plus one initial
+	`task_details` row.
+
+	Response:
+	  '7'  -> validation failure
+	  '1'  -> success
+	  '0'  -> nothing could be saved
+*/
+
+$taskDate       = $_POST['task_date'];
+$idExecutive    = $_POST['id_executive'];
+$idTeam         = $_POST['id_team'];
+$modules        = isset($_POST['module']) ? $_POST['module'] : array();
+$descriptions   = isset($_POST['description']) ? $_POST['description'] : array();
+$deliveryDates  = isset($_POST['estimated_delivery']) ? $_POST['estimated_delivery'] : array();
+$statuses       = isset($_POST['task_status']) ? $_POST['task_status'] : array();
+$completedDates = isset($_POST['completed_date']) ? $_POST['completed_date'] : array();
+
+if($taskDate == '' || $idExecutive == '' || $idTeam == '' || empty($modules) || empty($descriptions)){
+	echo '7';
+	exit;
+}
+
+$savedCount = 0;
+
+foreach($modules as $key => $moduleId){
+
+	$description   = isset($descriptions[$key])   ? $descriptions[$key]   : '';
+	$deliveryDate   = isset($deliveryDates[$key])   ? $deliveryDates[$key]   : '';
+	$status         = isset($statuses[$key])        ? $statuses[$key]        : 'Pending';
+	$completedDate  = isset($completedDates[$key])  ? $completedDates[$key]  : '';
+
+	if($moduleId == '' || $description == ''){
+		continue; // skip incomplete rows
 	}
 
+	// ---- 1. Create the task item (fixed facts, never changes again) ----
+	$insTask = "INSERT INTO `task` SET
+					`id_shop`       = '".addslashes($_SESSION['shop'])."',
+					`dated`         = '".addslashes(date('Y-m-d', strtotime($taskDate)))."',
+					`id_team`       = '".addslashes($idTeam)."',
+					`task_code`     = '',
+					`id_module`     = '".addslashes($moduleId)."',
+					`description`   = '".addslashes($description)."',
+					`created_by`    = '".addslashes($_SESSION['userId'])."',
+					`created_date`  = '".currenDateTime()."'";
 
+	if(!executeSql($insTask)){
+		continue;
+	}
 
+	$newTaskId = 0;
+	$lastIdRes = executeSql("SELECT LAST_INSERT_ID() AS id");
+	if($lastIdRes){
+		$lastIdRow = $db->fetch_assoc2($lastIdRes);
+		$newTaskId = $lastIdRow['id'];
+	}
 
+	if(empty($newTaskId)){
+		continue;
+	}
 
-?>
+	// ---- 2. Generate and store its Task ID / task_code ----
+	$taskCode = 'TSK-'.date('y').'-'.str_pad($newTaskId, 5, '0', STR_PAD_LEFT);
+	executeSql("UPDATE `task` SET `task_code` = '".addslashes($taskCode)."' WHERE `id` = '".$newTaskId."' ");
 
-                
+	// ---- 3. Create its initial task_details (history) entry ----
+	$completedDateSql = ($status == 'Completed' && $completedDate != '')
+							? "'".addslashes(date('Y-m-d', strtotime($completedDate)))."'"
+							: 'NULL';
 
+	$estimatedDeliverySql = ($deliveryDate != '')
+							? "'".addslashes(date('Y-m-d', strtotime($deliveryDate)))."'"
+							: "'0000-00-00'";
 
+	$insDetail = "INSERT INTO `task_details` SET
+					`task_id`                  = '".$newTaskId."',
+					`id_executive`             = '".addslashes($idExecutive)."',
+					`estimated_delivery_date`   = ".$estimatedDeliverySql.",
+					`status`                    = '".addslashes($status)."',
+					`completed_date`            = ".$completedDateSql.",
+					`created_by`                = '".addslashes($_SESSION['userId'])."',
+					`created_date`               = '".currenDateTime()."'";
 
+	if(executeSql($insDetail)){
+		$savedCount++;
 
+		$newDetailId = 0;
+		$lastDetailIdRes = executeSql("SELECT LAST_INSERT_ID() AS id");
+		if($lastDetailIdRes){
+			$lastDetailIdRow = $db->fetch_assoc2($lastDetailIdRes);
+			$newDetailId = $lastDetailIdRow['id'];
+		}
 
+		// ---- 4. Put it on the calendar, keyed to its estimated delivery date.
+		// Skipped entirely if it's created already in the final "Customer Verified" state. ----
+		if(!empty($newDetailId) && $status != 'On Hold'){
+			executeSql("INSERT INTO `fs_daily_calender` SET
+							`id_shop`         = '".addslashes($_SESSION['shop'])."',
+							`type`            = '9',
+							`id_user`         = '".addslashes($_SESSION['userId'])."',
+							`assign_user_id`  = '".addslashes($idExecutive)."',
+							`visit_id`        = '".$newTaskId."',
+							`doc_id`          = '".$newDetailId."',
+							`id_list_name`    = '0',
+							`dated`           = ".$estimatedDeliverySql.",
+							`followup_date`   = ".$estimatedDeliverySql.",
+							`status`          = '1',
+							`enquiry_details` = '0'");
+		}
+	}
+}
 
-
-
-
+if($savedCount > 0){
+	$_SESSION['successMsg'] = $savedCount.' task(s) added successfully.';
+	echo '1';
+} else {
+	$_SESSION['errorMsg'] = 'No tasks could be saved.';
+	echo '0';
+}
+exit;
