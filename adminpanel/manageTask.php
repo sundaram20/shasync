@@ -125,13 +125,13 @@ if(isset($_REQUEST['check_box']) && $_REQUEST['check_box'] == 1 && !empty($_REQU
     $sql .= " AND DATE(T.dated) >= '".date('Y-m-d', strtotime($from_book))."' AND DATE(T.dated) <= '".date('Y-m-d', strtotime($to_book))."' ";
 }
 
-if(isset($_REQUEST['renewal_check']) && $_REQUEST['renewal_check'] == 1 && !empty($_REQUEST['renewal_date'])){
+if(isset($_REQUEST['est_check']) && $_REQUEST['est_check'] == 1 && !empty($_REQUEST['est_date'])){
     
-    $renewal_date = explode(" to ", $_REQUEST['renewal_date']);
+    $renewal_date = explode(" to ", $_REQUEST['est_date']);
     $from_renewal = $renewal_date[0];
     $to_renewal   = $renewal_date[1];
 
-    $sql .= " AND dp.id_renewal_required = '1' 
+    $sql .= " 
               AND DATE(TD.estimated_delivery_date) >= '".date('Y-m-d', strtotime($from_renewal))."'
               AND DATE(TD.estimated_delivery_date) <= '".date('Y-m-d', strtotime($to_renewal))."' ";
 }
