@@ -102,6 +102,30 @@ foreach($modules as $key => $moduleId){
 
 	if(executeSql($insDetail)){
 		$savedCount++;
+
+		$newDetailId = 0;
+		$lastDetailIdRes = executeSql("SELECT LAST_INSERT_ID() AS id");
+		if($lastDetailIdRes){
+			$lastDetailIdRow = $db->fetch_assoc2($lastDetailIdRes);
+			$newDetailId = $lastDetailIdRow['id'];
+		}
+
+		// ---- 4. Put it on the calendar, keyed to its estimated delivery date.
+		// Skipped entirely if it's created already in the final "Customer Verified" state. ----
+		if(!empty($newDetailId) && $status != 'On Hold'){
+			executeSql("INSERT INTO `fs_daily_calender` SET
+							`id_shop`         = '".addslashes($_SESSION['shop'])."',
+							`type`            = '9',
+							`id_user`         = '".addslashes($_SESSION['userId'])."',
+							`assign_user_id`  = '".addslashes($idExecutive)."',
+							`visit_id`        = '".$newTaskId."',
+							`doc_id`          = '".$newDetailId."',
+							`id_list_name`    = '0',
+							`dated`           = ".$estimatedDeliverySql.",
+							`followup_date`   = ".$estimatedDeliverySql.",
+							`status`          = '1',
+							`enquiry_details` = '0'");
+		}
 	}
 }
 

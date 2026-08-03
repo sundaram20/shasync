@@ -67,10 +67,12 @@ $completedDateSql = ($newStatus == 'Completed' && $newCompleted != '')
 						? "'".addslashes(date('Y-m-d', strtotime($newCompleted)))."'"
 						: 'NULL';
 
+$newDeliverySql = "'".addslashes(date('Y-m-d', strtotime($newDelivery)))."'";
+
 $insDetail = "INSERT INTO `task_details` SET
 				`task_id`                  = '".$taskId."',
 				`id_executive`             = '".addslashes($newExecutive)."',
-				`estimated_delivery_date`   = '".addslashes(date('Y-m-d', strtotime($newDelivery)))."',
+				`estimated_delivery_date`   = ".$newDeliverySql.",
 				`status`                    = '".addslashes($newStatus)."',
 				`completed_date`            = ".$completedDateSql.",
 				`remark`                    = ".($remarkText != '' ? "'".addslashes($remarkText)."'" : 'NULL').",
@@ -78,6 +80,34 @@ $insDetail = "INSERT INTO `task_details` SET
 				`created_date`               = '".currenDateTime()."'";
 
 if(executeSql($insDetail)){
+
+	$newDetailId = 0;
+	$lastDetailIdRes = executeSql("SELECT LAST_INSERT_ID() AS id");
+	if($lastDetailIdRes){
+		$lastDetailIdRow = $db->fetch_assoc2($lastDetailIdRes);
+		$newDetailId = $lastDetailIdRow['id'];
+	}
+
+	// ---- Sync the calendar entry: drop the old one, then either leave it
+	// gone (task reached Customer Verified) or re-add it against the
+	// current estimated delivery date / assigned executive. ----
+	executeSql("DELETE FROM `fs_daily_calender` WHERE `type`='9' AND `visit_id`='".$taskId."' ");
+
+	if(!empty($newDetailId) && $newStatus != 'On Hold'){
+		executeSql("INSERT INTO `fs_daily_calender` SET
+						`id_shop`         = '".addslashes($_SESSION['shop'])."',
+						`type`            = '9',
+						`id_user`         = '".addslashes($_SESSION['userId'])."',
+						`assign_user_id`  = '".addslashes($newExecutive)."',
+						`visit_id`        = '".$taskId."',
+						`doc_id`          = '".$newDetailId."',
+						`id_list_name`    = '0',
+						`dated`           = ".$newDeliverySql.",
+						`followup_date`   = ".$newDeliverySql.",
+						`status`          = '1',
+						`enquiry_details` = '0'");
+	}
+
 	echo '1';
 } else {
 	echo '0';

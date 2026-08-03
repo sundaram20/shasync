@@ -11,16 +11,14 @@ $events = array();
 $shop = addslashes($_SESSION['shop']);
 $uid  = addslashes($Admin_user_id);
 
-// FIX 1: UserLevel fetched ONCE before all loops (was inside the loop before)
+
 $UserLevel = selectColumn(
     TBL_USERS,
     'user_level',
     " WHERE `status`='1' AND `id_shop`='$shop' AND `id`='$uid'"
 );
 
-// FIX 2: Max-id for open enquiries built ONCE before all loops.
-// Old code scanned all 18829 rows in PHP with one selectColumn() per row = 18829+ queries.
-// New code: one SQL query, scoped to this shop + open leads only.
+
 $resMaxId = executeSql("
     SELECT MAX(id) AS MaxId
     FROM `fs_enquiry_details`
@@ -53,6 +51,8 @@ if (num_rows($resState2) > 0) {
             case 5: $UseType = "AND type=5 AND doc_id=0"; $FileName = 'editQuote.php'; break;
             case 7: $UseType = "AND type='7' AND status='1'"; $FileName = 'calls.php'; $IncentiveActive = '1'; break;
             case 8: $UseType = "AND type='8' AND status='1'"; $FileName = 'ManagerDailyPickupItemWise.php'; break;
+            // ── NEW: Task (type 9) ──────────────────────────────────────────
+            case 9: $UseType = "AND type='9' AND status='1'"; $FileName = 'editTask.php'; break;
         }
 
         // Per-user filter — plain version for fs_daily_calender (no joins, no ambiguity)
@@ -63,7 +63,7 @@ if (num_rows($resState2) > 0) {
             if (in_array((string)$type, array('2','3','7'))) {
                 $UserAssignId     = " AND `id_user`='$uid'";
                 $UserAssignIdJoin = " AND f.`id_user`='$uid'";
-            } elseif (in_array((string)$type, array('1','8'))) {
+            } elseif (in_array((string)$type, array('1','8','9'))) {
                 $UserAssignId     = " AND `assign_user_id`='$uid'";
                 $UserAssignIdJoin = " AND f.`assign_user_id`='$uid'";
             }
@@ -313,6 +313,28 @@ if (num_rows($resState2) > 0) {
                     $VisiteID = 'id';
                     break;
 
+                // ── NEW: Type 9: Task ──────────────────────────────────────────────
+                // fs_daily_calender already carries visit_id (task.id) and
+                // doc_id (the task_details.id active for this calendar entry),
+                // kept in sync by ajaxUpdateTask.php / ajaxUpdateTaskDetail.php.
+                case 9:
+                    $resSql123 = executeSql("
+                        SELECT f.*, t.task_code, t.description,
+                               tm.name AS module_name,
+                               td.status, td.completed_date,
+                               u.name AS assigned_user_name
+                        FROM `fs_daily_calender` f
+                        LEFT JOIN `task` t              ON t.id = f.visit_id
+                        LEFT JOIN `task_details` td      ON td.id = f.doc_id
+                        LEFT JOIN `task_module` tm       ON tm.id = t.id_module
+                        LEFT JOIN `" . TBL_USERS . "` u  ON u.id = f.assign_user_id AND u.id_shop='$shop'
+                        WHERE f.status='1' AND f.id_shop='$shop'
+                          AND f.type='9' AND f.dated='$dated' AND f.assign_user_id='$uid'
+                        LIMIT 200
+                    ");
+                    $VisiteID = 'visit_id';
+                    break;
+
                 default:
                     continue 2;
             }
@@ -331,6 +353,8 @@ if (num_rows($resState2) > 0) {
                 case 5: $k .= '<th>Company Name</th><th>Hotel Name</th>'; break;
                 case 7: $k .= '<th>Source</th><th>Call Type</th><th>Serial</th><th>Customer Name</th><th>Remark</th>'; break;
                 case 8: $k .= '<th>Bill No</th><th>Company</th><th>Contact</th><th>Last Remark</th><th>Status</th>'; break;
+                // ── NEW ──
+                case 9: $k .= '<th>Task ID</th><th>Module</th><th>Description</th><th>Status</th><th>Assigned To</th>'; break;
             }
 
             $k .= '</tr></thead><tbody>';
@@ -367,6 +391,15 @@ if (num_rows($resState2) > 0) {
                     $k .= '<td>' . ($row123['support_status'] == 0 ? 'Close' : 'Open') . '</td>';
                 }
 
+                // ── NEW: Type 9: Task - all from JOIN ──
+                if ($type == 9) {
+                    $k .= '<td><a href="editTask.php?action=edit&eId=' . $encId . '">' . $row123['task_code'] . '</a></td>';
+                    $k .= '<td>' . $row123['module_name']        . '</td>';
+                    $k .= '<td>' . $row123['description']        . '</td>';
+                    $k .= '<td>' . $row123['status']              . '</td>';
+                    $k .= '<td>' . $row123['assigned_user_name'] . '</td>';
+                }
+
                 // Hotel (types 1, 3) — from JOIN
                 if ($type == 1 || $type == 3) {
                     $k .= '<td>' . $row123['hotel_name'] . ' - ' . $row123['hotel_city'] . '</td>';
@@ -381,7 +414,7 @@ if (num_rows($resState2) > 0) {
                 }
 
                 // Company link cell (types 1-5) — from JOIN
-                if ($type != 7 && $type != 8) {
+                if ($type != 7 && $type != 8 && $type != 9) {
                     $withOutComTxt = '';
                     if ($type == 4) $withOutComTxt = 'Enquiry';
                     if ($type == 5) $withOutComTxt = 'Direct Guest';
