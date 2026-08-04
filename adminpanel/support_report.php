@@ -434,6 +434,7 @@ if ($viewMode === 'as_on') {
               <thead>
                 <tr>
                   <?php if ($viewMode === 'as_on'): ?>
+                    <th style="width:34px;">#</th>
                     <th>Company</th>
                     <?php foreach ($periods as $days): ?><th><?php echo $days; ?>D</th><?php endforeach; ?>
                   <?php else: ?>
@@ -445,6 +446,7 @@ if ($viewMode === 'as_on') {
                 <?php $rank = 1; foreach ($companyReport as $c): ?>
                 <tr>
                   <?php if ($viewMode === 'as_on'): ?>
+                    <td><?php echo $rank++; ?></td>
                     <td><?php echo $c->company_name ? htmlspecialchars($c->company_name) : '<em>Unknown</em>'; ?></td>
                     <?php foreach ($periods as $days): $field = 'd' . $days; ?>
                       <td class="<?php echo $days == 365 ? 'col-365' : ''; ?>"><?php echo (int) $c->$field; ?></td>
@@ -553,7 +555,7 @@ if ($viewMode === 'as_on') {
 <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
 $(function () {
-  var companyOrderCol   = <?php echo $viewMode === 'as_on' ? 5 : 2; ?>;
+  var companyOrderCol   = <?php echo $viewMode === 'as_on' ? 6 : 2; ?>;
   var executiveOrderCol = <?php echo $viewMode === 'as_on' ? 5 : 1; ?>;
 
   $('#companyTable').DataTable({ pageLength: 8, lengthChange: false, order: [[companyOrderCol, 'desc']] });
