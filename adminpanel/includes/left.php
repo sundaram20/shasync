@@ -35,6 +35,8 @@
        
       <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/editDailyReport.php"> <i class="fa fa-laptop"></i> <span>Activity Calendar</span> </a>
       </li>
+      <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/manageTask.php"> <i class="fa fa-tasks"></i> <span>Task Manager</span> </a>
+      </li>
 
  <li > <a href="<?php echo $SITE_URL; ?>/adminpanel/weeklyPlanner.php"> <i class="fa fa-laptop"></i> <span>Planner</span> </a>
       </li>
