@@ -405,6 +405,7 @@ $total = $db->num_rows();
                     <th>Task Description</th>
                     <th>Estimated Delivery</th>
                     <th>Status</th>
+                    <th>Remark</th>
                     <th>Completed Date</th>
                     <th>Action</th>
                   </tr>
@@ -422,6 +423,7 @@ $total = $db->num_rows();
                     <td><?php echo $row->description; ?></td>
                     <td><?php echo ($row->estimated_delivery_date != '' && $row->estimated_delivery_date != '0000-00-00') ? date('d M Y',strtotime($row->estimated_delivery_date)) : '-'; ?></td>
                     <td><span class="label <?php echo taskStatusBadgeClass($row->status); ?>"><?php echo taskStatusLabel($row->status); ?></span></td>
+                    <td><?php echo $row->remark; ?></td>
                     <td><?php echo ($row->completed_date != '' && $row->completed_date != '0000-00-00') ? date('d M Y',strtotime($row->completed_date)) : '-'; ?></td>
                     <td>
                       <a href="editTask.php?action=edit&eId=<?=encryptor('encrypt',$row->id)?>" title="Edit"><i class="fa fa-pencil-square-o"></i></a>
