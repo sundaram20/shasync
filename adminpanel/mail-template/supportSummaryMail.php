@@ -27,7 +27,8 @@ if($sqlQuery){
 	
 	//$id_user = selectColumn(TBL_AREAS,'user_id','where id="'.$id_area.'" ');
 	$id_user =  $_SESSION['userId'];
-	$handeledby = selectColumn(TBL_USERS,'name','where id="'.$id_user.'" ');
+	//$handeledby = selectColumn(TBL_USERS,'name','where id="'.$id_user.'" ');
+    $handeledby = 'Aadiyar Infotech';
 	$id_designation = selectColumn(TBL_USERS,'designation','where id="'.$id_user.'" ');
 	$designation = selectColumn(TBL_DESIGNATION_MASTER,'name','where id="'.$id_designation.'" ');
 	$handeledbyEmail = selectColumn(TBL_USERS,'email','where id="'.$id_user.'" ');
