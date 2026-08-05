@@ -1,5 +1,5 @@
 <?php include_once("../config/auto_loader.php");
-print_r($_REQUEST);
+//print_r($_REQUEST);
 
 $createDate	=	date('d-m-Y');
 $billing_date	=	date('d-m-Y');
