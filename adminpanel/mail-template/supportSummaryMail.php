@@ -88,7 +88,7 @@ if($setContent!=''){
 $content .= "<table class='table table-striped text-center' style='border-spacing:0;width:40%;text-align:center;'>
   <tbody>
     <tr>
-      <td style='border:1px solid #252525;'><b> Your Last Remark </b></td>
+      <td style='border:1px solid #252525;'><b> Your Last Support Remark </b></td>
 
      
     </tr>";
