@@ -831,9 +831,10 @@ $resw = mysqli_query($connNew,$sqlQuery);
 					}
 						*/?>
 
-                      <a id="" onclick="viewSupport('<?php echo $row->id; ?>')">
-    <i class='fa fa-phone'></i>
-						</a>
+                      <a id="" onclick="viewSupport('<?php echo $row->id; ?>')"><i class='fa fa-phone'></i></a>
+						&nbsp;&nbsp;&nbsp;&nbsp;
+					  <a  href="mail-template/supportSummaryMail.php?id='<?php echo encryptor('encrypt',$row->id); ?>'" target="_blank" ><i class="fa fa-paper-plane"></i></a>
+
                      </td>
                   </tr>
                   <?php }?>
